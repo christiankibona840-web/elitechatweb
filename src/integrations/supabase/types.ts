@@ -14,13 +14,337 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contacts: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_messages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          group_id: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          group_id: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          group_id?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          is_online: boolean | null
+          last_seen: string | null
+          readable_id: string | null
+          user_number: number
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name: string
+          id: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          readable_id?: string | null
+          user_number?: number
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          readable_id?: string | null
+          user_number?: number
+          username?: string
+        }
+        Relationships: []
+      }
+      status_views: {
+        Row: {
+          id: string
+          status_id: string
+          viewed_at: string | null
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          status_id: string
+          viewed_at?: string | null
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          status_id?: string
+          viewed_at?: string | null
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_views_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      statuses: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

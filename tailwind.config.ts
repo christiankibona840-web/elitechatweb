@@ -57,6 +57,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        wa: {
+          green: "hsl(var(--wa-green))",
+          "green-dark": "hsl(var(--wa-green-dark))",
+          "green-light": "hsl(var(--wa-green-light))",
+          panel: "hsl(var(--wa-panel))",
+          "chat-bg": "hsl(var(--wa-chat-bg))",
+          "bubble-in": "hsl(var(--wa-bubble-in))",
+          header: "hsl(var(--wa-header))",
+          "input-bg": "hsl(var(--wa-input-bg))",
+          online: "hsl(var(--wa-online))",
+          icon: "hsl(var(--wa-icon))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -5,6 +5,7 @@ import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
 import { loadSavedTheme } from '@/components/SettingsPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;

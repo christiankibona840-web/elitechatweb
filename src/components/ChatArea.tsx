@@ -13,6 +13,7 @@ interface ChatAreaProps {
   me: Profile;
   activeChat: { type: 'dm'; id: string } | { type: 'group'; id: string } | null;
   onMessagesChanged: () => void;
+  onBack?: () => void;
 }
 
 const TypingIndicator = () => (

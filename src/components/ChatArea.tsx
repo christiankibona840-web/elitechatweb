@@ -35,9 +35,17 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
+  const [wallpaper, setWallpaper] = useState<string>(() => (window as any).__chatWallpaper || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Listen for wallpaper changes
+  useEffect(() => {
+    const handler = (e: Event) => setWallpaper((e as CustomEvent).detail || '');
+    window.addEventListener('wallpaper-change', handler);
+    return () => window.removeEventListener('wallpaper-change', handler);
+  }, []);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -47,7 +55,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
       loadContactProfile(activeChat.id);
       markAsRead(activeChat.id);
 
-      // Real-time DM messages
       const msgChannel = supabase
         .channel(`dm-${activeChat.id}`)
         .on('postgres_changes', {
@@ -64,7 +71,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         })
         .subscribe();
 
-      // Typing presence
       const presenceChannel = supabase.channel(`typing-${[me.id, activeChat.id].sort().join('-')}`, {
         config: { presence: { key: me.id } }
       });
@@ -278,12 +284,16 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
     );
   };
 
+  const chatBgStyle: React.CSSProperties = wallpaper
+    ? { backgroundImage: `url(${wallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
+    : {};
+
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-wa-header border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Avatar name={chatName} size={42} />
+          <Avatar name={chatName} size={42} avatarUrl={activeChat.type === 'dm' ? contactProfile?.avatar_url : groupInfo?.avatar_url} />
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
             <div className={`text-xs ${contactProfile?.is_online ? 'text-wa-online' : 'text-muted-foreground'}`}>
@@ -299,7 +309,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-[10%] py-3 wa-pattern-bg">
+      <div
+        className={`flex-1 overflow-y-auto px-[10%] py-3 ${!wallpaper ? 'wa-pattern-bg' : ''}`}
+        style={chatBgStyle}
+      >
+        {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}
         {messages.length === 0 && (
           <div className="text-center mt-10 text-muted-foreground text-sm">
             No messages yet — say hello! 👋

@@ -3,9 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
+import UpdateAlert from '@/components/UpdateAlert';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
+
+const APP_VERSION = '2.0.0';
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
@@ -13,6 +16,28 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showUpdateAlert, setShowUpdateAlert] = useState(false);
+
+  useEffect(() => {
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('chat-theme');
+    if (savedTheme) {
+      try {
+        const theme = JSON.parse(savedTheme);
+        document.documentElement.style.setProperty('--background', theme.bg);
+        document.documentElement.style.setProperty('--wa-panel', theme.panel);
+        document.documentElement.style.setProperty('--primary', theme.primary);
+        document.documentElement.style.setProperty('--ring', theme.primary);
+      } catch {}
+    }
+
+    // Check if user has seen this version
+    const seenVersion = localStorage.getItem('app-version-seen');
+    if (seenVersion && seenVersion !== APP_VERSION) {
+      setShowUpdateAlert(true);
+    }
+    localStorage.setItem('app-version-seen', APP_VERSION);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -30,14 +55,45 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Request notification permission
+  useEffect(() => {
+    if (session && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [session]);
+
+  // Listen for new messages for push notifications
+  useEffect(() => {
+    if (!profile) return;
+
+    const channel = supabase
+      .channel('push-notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `receiver_id=eq.${profile.id}`,
+      }, async (payload) => {
+        const msg = payload.new as any;
+        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          const { data: sender } = await supabase.from('profiles').select('display_name').eq('id', msg.sender_id).single();
+          new Notification(sender?.display_name || 'New Message', {
+            body: msg.content || '📎 File',
+            icon: '/favicon.ico',
+          });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id]);
+
   const loadProfile = async (userId: string) => {
-    // Small delay for trigger to create profile
     await new Promise(r => setTimeout(r, 500));
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
     setLoading(false);
 
-    // Update online status
     if (data) {
       await supabase.from('profiles').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId);
     }
@@ -56,12 +112,16 @@ const Index = () => {
     setRefreshKey(k => k + 1);
   }, []);
 
+  const handleProfileUpdate = useCallback((updatedProfile: Profile) => {
+    setProfile(updatedProfile);
+  }, []);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="text-5xl mb-4">💬</div>
-          <p className="text-muted-foreground">Inapakia...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -73,12 +133,19 @@ const Index = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {showUpdateAlert && (
+        <UpdateAlert
+          version={APP_VERSION}
+          onDismiss={() => setShowUpdateAlert(false)}
+        />
+      )}
       <ChatSidebar
         me={profile}
         activeChat={activeChat}
         onSelectChat={setActiveChat}
         onLogout={handleLogout}
         refreshKey={refreshKey}
+        onProfileUpdate={handleProfileUpdate}
       />
       <ChatArea
         me={profile}

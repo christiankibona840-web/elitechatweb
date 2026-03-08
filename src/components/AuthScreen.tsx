@@ -11,6 +11,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [gender, setGender] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,10 +21,11 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
     setLoading(true);
     try {
       if (mode === 'register') {
-        if (!username.trim() || username.trim().length < 3) { setError('Jina la mtumiaji lazima liwe herufi 3+'); setLoading(false); return; }
-        if (!email.trim()) { setError('Weka barua pepe'); setLoading(false); return; }
-        if (password.length < 6) { setError('Nywila lazima iwe herufi 6+'); setLoading(false); return; }
-        if (password !== confirm) { setError('Nywila hazilingani'); setLoading(false); return; }
+        if (!username.trim() || username.trim().length < 3) { setError('Username must be at least 3 characters'); setLoading(false); return; }
+        if (!email.trim()) { setError('Enter your email'); setLoading(false); return; }
+        if (!gender) { setError('Please select your gender'); setLoading(false); return; }
+        if (password.length < 6) { setError('Password must be at least 6 characters'); setLoading(false); return; }
+        if (password !== confirm) { setError('Passwords do not match'); setLoading(false); return; }
 
         const { error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
@@ -32,13 +34,14 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
             data: {
               username: username.trim().toLowerCase(),
               display_name: displayName.trim() || username.trim(),
+              gender,
             }
           }
         });
         if (signUpError) { setError(signUpError.message); setLoading(false); return; }
         onLogin();
       } else {
-        if (!email.trim() || !password) { setError('Weka barua pepe na nywila'); setLoading(false); return; }
+        if (!email.trim() || !password) { setError('Enter email and password'); setLoading(false); return; }
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -47,7 +50,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
         onLogin();
       }
     } catch (e: any) {
-      setError(e.message || 'Kuna tatizo');
+      setError(e.message || 'Something went wrong');
     }
     setLoading(false);
   };
@@ -55,6 +58,8 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') submit();
   };
+
+  const inputClass = "bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background relative overflow-hidden">
@@ -67,7 +72,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
           </div>
           <h1 className="text-xl font-normal text-foreground">Web Chaty YST</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {mode === 'register' ? 'Tengeneza akaunti mpya' : 'Karibu! Ingia ili kuendelea'}
+            {mode === 'register' ? 'Create a new account' : 'Welcome back! Sign in to continue'}
           </p>
         </div>
 
@@ -76,57 +81,37 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
             onClick={() => { setMode('login'); setError(''); }}
             className={`flex-1 py-2 text-sm transition-all ${mode === 'login' ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground'}`}
           >
-            Ingia
+            Sign In
           </button>
           <button
             onClick={() => { setMode('register'); setError(''); }}
             className={`flex-1 py-2 text-sm transition-all ${mode === 'register' ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground'}`}
           >
-            Jiandikishe
+            Register
           </button>
         </div>
 
         <div className="flex flex-col gap-2.5">
           {mode === 'register' && (
             <>
-              <input
-                className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none"
-                placeholder="Jina la mtumiaji (mfano: json)"
-                maxLength={20}
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-              />
-              <input
-                className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none"
-                placeholder="Jina lako (mfano: Amina)"
-                maxLength={30}
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-              />
+              <input className={inputClass} placeholder="Username (e.g. john)" maxLength={20} value={username} onChange={e => setUsername(e.target.value)} />
+              <input className={inputClass} placeholder="Display name (e.g. John)" maxLength={30} value={displayName} onChange={e => setDisplayName(e.target.value)} />
+              <select
+                className={`${inputClass} ${!gender ? 'text-muted-foreground' : ''}`}
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+              >
+                <option value="">Select gender</option>
+                <option value="male">♂ Male</option>
+                <option value="female">♀ Female</option>
+                <option value="other">Other</option>
+              </select>
             </>
           )}
-          <input
-            className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none"
-            placeholder="Barua pepe"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
-          <input
-            className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none"
-            type="password"
-            placeholder="Nywila"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-          />
+          <input className={inputClass} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          <input className={inputClass} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
           {mode === 'register' && (
-            <input
-              className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none"
-              type="password"
-              placeholder="Thibitisha nywila"
-              value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-            />
+            <input className={inputClass} type="password" placeholder="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} />
           )}
           {error && <p className="text-destructive text-xs text-center">{error}</p>}
           <button
@@ -134,12 +119,12 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
             disabled={loading}
             className="bg-primary text-primary-foreground rounded-lg py-3 text-sm font-semibold mt-1 hover:bg-wa-green-dark transition-colors disabled:opacity-50"
           >
-            {loading ? 'Subiri...' : mode === 'register' ? 'Tengeneza Akaunti' : 'Ingia'}
+            {loading ? 'Please wait...' : mode === 'register' ? 'Create Account' : 'Sign In'}
           </button>
         </div>
 
         <div className="text-center text-muted-foreground text-xs mt-5 flex items-center justify-center gap-1">
-          🔒 Mazungumzo yako yanalindwa na Lovable Cloud
+          🔒 Your conversations are secured by Lovable Cloud
         </div>
       </div>
     </div>

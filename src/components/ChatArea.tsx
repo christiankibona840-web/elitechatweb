@@ -294,6 +294,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-wa-header border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors mr-1">
+              <ArrowLeft size={20} />
+            </button>
+          )}
           <Avatar name={chatName} size={42} avatarUrl={activeChat.type === 'dm' ? contactProfile?.avatar_url : groupInfo?.avatar_url} />
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>

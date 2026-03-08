@@ -139,7 +139,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
     activeChat?.type === item.type && activeChat?.id === item.id;
 
   return (
-    <div className="w-80 flex-shrink-0 border-r border-border bg-wa-panel flex flex-col h-screen">
+    <div className="w-full md:w-80 flex-shrink-0 border-r border-border bg-wa-panel flex flex-col h-screen">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-wa-header flex-shrink-0">
         <div className="flex items-center gap-2.5">

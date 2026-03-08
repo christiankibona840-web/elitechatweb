@@ -322,9 +322,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
               <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[65%] px-3 py-1.5 text-sm leading-relaxed break-words shadow-sm relative ${
                   isMe
-                    ? 'bg-wa-green-light text-[hsl(var(--wa-bubble-out-text))] rounded-lg rounded-tr-none'
-                    : 'bg-wa-bubble-in text-foreground rounded-lg rounded-tl-none'
-                }`}>
+                    ? 'bg-wa-green-light text-[hsl(var(--wa-bubble-out-text))]'
+                    : 'bg-wa-bubble-in text-foreground'
+                }`} style={{
+                  borderRadius: `var(--bubble-radius)`,
+                  ...(isMe ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }),
+                }}>
                   {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
                   {renderFilePreview(msg)}
                   {msg.content && <div>{msg.content}</div>}

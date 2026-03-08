@@ -1,20 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fmtTime, fmtDate } from '@/lib/chatStore';
 import Avatar from './Avatar';
-import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
+import VoiceRecorder from './VoiceRecorder';
+import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
-type Message = Tables<'messages'>;
-type GroupMessage = Tables<'group_messages'>;
 
 interface ChatAreaProps {
   me: Profile;
   activeChat: { type: 'dm'; id: string } | { type: 'group'; id: string } | null;
   onMessagesChanged: () => void;
 }
+
+const TypingIndicator = () => (
+  <div className="flex items-center gap-1 px-3 py-2">
+    <div className="flex gap-1">
+      {[0, 1, 2].map(i => (
+        <div key={i} className="w-2 h-2 bg-muted-foreground rounded-full" style={{ animation: `bounce-dot 1.2s infinite ${i * 0.15}s` }} />
+      ))}
+    </div>
+    <span className="text-xs text-muted-foreground ml-1">typing...</span>
+  </div>
+);
 
 const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -23,8 +33,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
   const [groupInfo, setGroupInfo] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showRecorder, setShowRecorder] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -34,8 +47,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
       loadContactProfile(activeChat.id);
       markAsRead(activeChat.id);
 
-      // Subscribe to real-time DM messages
-      const channel = supabase
+      // Real-time DM messages
+      const msgChannel = supabase
         .channel(`dm-${activeChat.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -51,7 +64,25 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         })
         .subscribe();
 
-      return () => { supabase.removeChannel(channel); };
+      // Typing presence
+      const presenceChannel = supabase.channel(`typing-${[me.id, activeChat.id].sort().join('-')}`, {
+        config: { presence: { key: me.id } }
+      });
+      
+      presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+          const state = presenceChannel.presenceState();
+          const otherTyping = Object.entries(state).some(([key, val]) => 
+            key !== me.id && (val as any[])?.[0]?.typing
+          );
+          setIsTyping(otherTyping);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(msgChannel);
+        supabase.removeChannel(presenceChannel);
+      };
     } else {
       loadGroupMessages(activeChat.id);
       loadGroupInfo(activeChat.id);
@@ -66,7 +97,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         }, (payload) => {
           const newMsg = payload.new as any;
           if (newMsg.sender_id !== me.id) {
-            // Load sender profile for display
             supabase.from('profiles').select('display_name').eq('id', newMsg.sender_id).single().then(({ data }) => {
               setMessages(prev => [...prev, { ...newMsg, profiles: data }]);
               onMessagesChanged();
@@ -82,6 +112,21 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const broadcastTyping = useCallback(() => {
+    if (!activeChat || activeChat.type !== 'dm') return;
+    const channelName = `typing-${[me.id, activeChat.id].sort().join('-')}`;
+    const ch = supabase.channel(channelName, { config: { presence: { key: me.id } } });
+    ch.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await ch.track({ typing: true });
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(async () => {
+          await ch.track({ typing: false });
+        }, 2000);
+      }
+    });
+  }, [activeChat, me.id]);
 
   const loadContactProfile = async (id: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
@@ -124,21 +169,25 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
     const ext = f.name.split('.').pop();
     const path = `${me.id}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from('chat-files').upload(path, f);
-    if (error) { toast.error('Tatizo la kupakia faili'); return null; }
+    if (error) { toast.error('File upload error'); return null; }
     const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(path);
     return { url: publicUrl, name: f.name, type: f.type };
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (voiceBlob?: Blob) => {
     const text = input.trim();
-    if (!text && !file) return;
+    const fileToSend = voiceBlob || file;
+    if (!text && !fileToSend) return;
     if (!activeChat) return;
 
     setUploading(true);
     let fileData: { url: string; name: string; type: string } | null = null;
-    if (file) {
-      fileData = await uploadFile(file);
-      setFile(null);
+    if (fileToSend) {
+      const f = fileToSend instanceof Blob && !(fileToSend instanceof File) 
+        ? new File([fileToSend], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
+        : fileToSend as File;
+      fileData = await uploadFile(f);
+      if (!voiceBlob) setFile(null);
     }
 
     if (activeChat.type === 'dm') {
@@ -151,7 +200,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         file_type: fileData?.type || null,
       };
       const { data, error } = await supabase.from('messages').insert(msg).select().single();
-      if (error) { toast.error('Tatizo la kutuma ujumbe'); setUploading(false); return; }
+      if (error) { toast.error('Failed to send message'); setUploading(false); return; }
       setMessages(prev => [...prev, data]);
     } else {
       const msg = {
@@ -163,17 +212,18 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         file_type: fileData?.type || null,
       };
       const { data, error } = await supabase.from('group_messages').insert(msg).select('*, profiles!group_messages_sender_id_fkey(display_name)').single();
-      if (error) { toast.error('Tatizo la kutuma ujumbe'); setUploading(false); return; }
+      if (error) { toast.error('Failed to send message'); setUploading(false); return; }
       setMessages(prev => [...prev, data]);
     }
 
     setInput('');
     setUploading(false);
+    setShowRecorder(false);
     onMessagesChanged();
   };
 
   const deleteChat = async () => {
-    if (!activeChat || !confirm('Una uhakika unataka kufuta mazungumzo haya yote?')) return;
+    if (!activeChat || !confirm('Are you sure you want to delete this entire conversation?')) return;
     if (activeChat.type === 'dm') {
       await supabase.from('messages').delete()
         .or(`and(sender_id.eq.${me.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${me.id})`);
@@ -188,7 +238,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         <div className="text-7xl mb-5">💬</div>
         <h2 className="text-2xl font-light text-foreground mb-3">Web Chaty YST</h2>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px]">
-          Chagua mazungumzo au tafuta watumiaji kuanza.
+          Select a conversation or search for users to start chatting.
         </p>
       </div>
     );
@@ -196,14 +246,15 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
 
   const chatName = activeChat.type === 'dm' ? contactProfile?.display_name || '...' : groupInfo?.name || '...';
   const subtitle = activeChat.type === 'dm'
-    ? (contactProfile?.is_online ? 'mtandaoni' : 'nje ya mtandao')
-    : 'Kikundi';
+    ? (contactProfile?.is_online ? 'online' : 'offline')
+    : 'Group';
 
   let lastDate = '';
 
   const renderFilePreview = (msg: any) => {
     if (!msg.file_url) return null;
     const isImage = msg.file_type?.startsWith('image/');
+    const isAudio = msg.file_type?.startsWith('audio/');
     if (isImage) {
       return (
         <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mb-1">
@@ -211,11 +262,18 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         </a>
       );
     }
+    if (isAudio) {
+      return (
+        <div className="mb-1">
+          <audio controls src={msg.file_url} className="max-w-[220px]" />
+        </div>
+      );
+    }
     return (
       <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
         className="flex items-center gap-2 bg-black/20 rounded-lg p-2 mb-1 hover:bg-black/30 transition-colors">
         <FileText size={20} />
-        <span className="text-xs truncate">{msg.file_name || 'Faili'}</span>
+        <span className="text-xs truncate">{msg.file_name || 'File'}</span>
       </a>
     );
   };
@@ -228,11 +286,13 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
           <Avatar name={chatName} size={42} />
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
-            <div className={`text-xs ${contactProfile?.is_online ? 'text-wa-online' : 'text-muted-foreground'}`}>{subtitle}</div>
+            <div className={`text-xs ${contactProfile?.is_online ? 'text-wa-online' : 'text-muted-foreground'}`}>
+              {isTyping ? 'typing...' : subtitle}
+            </div>
           </div>
         </div>
         {activeChat.type === 'dm' && (
-          <button onClick={deleteChat} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Futa mazungumzo">
+          <button onClick={deleteChat} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Delete chat">
             <Trash2 size={18} />
           </button>
         )}
@@ -242,7 +302,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
       <div className="flex-1 overflow-y-auto px-[10%] py-3 wa-pattern-bg">
         {messages.length === 0 && (
           <div className="text-center mt-10 text-muted-foreground text-sm">
-            Bado hakuna ujumbe — mwamkie! 👋
+            No messages yet — say hello! 👋
           </div>
         )}
         {messages.map((msg) => {
@@ -283,6 +343,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
             </div>
           );
         })}
+        {isTyping && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 
@@ -299,37 +360,46 @@ const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
         </div>
       )}
 
+      {/* Voice recorder */}
+      {showRecorder && (
+        <VoiceRecorder
+          onSend={(blob) => sendMessage(blob)}
+          onCancel={() => setShowRecorder(false)}
+        />
+      )}
+
       {/* Input bar */}
       <div className="flex items-center gap-2 px-3.5 py-2.5 bg-wa-header flex-shrink-0">
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors flex-shrink-0"
-          title="Ambatanisha faili"
-        >
+        <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
+        <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors flex-shrink-0" title="Attach file">
           <Paperclip size={20} />
         </button>
         <div className="flex-1 bg-wa-input-bg rounded-3xl px-4 py-2">
           <input
             className="w-full bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground"
-            placeholder="Andika ujumbe…"
+            placeholder="Type a message…"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => { setInput(e.target.value); broadcastTyping(); }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
           />
         </div>
-        <button
-          onClick={sendMessage}
-          disabled={(!input.trim() && !file) || uploading}
-          className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-wa-green-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Send size={18} className="ml-0.5" />
-        </button>
+        {!input.trim() && !file ? (
+          <button
+            onClick={() => setShowRecorder(true)}
+            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-wa-green-dark transition-colors"
+            title="Voice note"
+          >
+            <Mic size={18} />
+          </button>
+        ) : (
+          <button
+            onClick={() => sendMessage()}
+            disabled={uploading}
+            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-wa-green-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Send size={18} className="ml-0.5" />
+          </button>
+        )}
       </div>
     </div>
   );

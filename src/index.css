@@ -33,6 +33,7 @@
     --ring: 160 100% 33%;
 
     --radius: 0.5rem;
+    --bubble-radius: 12px;
 
     /* WhatsApp specific tokens */
     --wa-green: 160 100% 33%;

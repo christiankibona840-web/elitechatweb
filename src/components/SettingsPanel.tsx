@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Avatar from './Avatar';
-import { Camera, Save, Key, User, Palette } from 'lucide-react';
+import { Camera, Save, Key, User, Palette, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -13,12 +13,49 @@ interface SettingsPanelProps {
 }
 
 const THEMES = [
-  { name: 'Default Dark', bg: '200 25% 5%', panel: '200 25% 10%', primary: '160 100% 33%' },
-  { name: 'Ocean Blue', bg: '220 30% 8%', panel: '220 25% 12%', primary: '210 100% 50%' },
-  { name: 'Purple Night', bg: '270 25% 8%', panel: '270 20% 12%', primary: '270 80% 60%' },
-  { name: 'Rose', bg: '340 20% 8%', panel: '340 18% 12%', primary: '340 80% 55%' },
-  { name: 'Emerald', bg: '160 25% 5%', panel: '160 20% 10%', primary: '160 80% 40%' },
+  { name: 'Default Dark', bg: '200 25% 5%', panel: '200 25% 10%', primary: '160 100% 33%', bubbleIn: '200 18% 17%', bubbleOut: '120 80% 90%', chatBg: '200 30% 5%' },
+  { name: 'Ocean Blue', bg: '220 30% 8%', panel: '220 25% 12%', primary: '210 100% 50%', bubbleIn: '220 20% 18%', bubbleOut: '200 80% 88%', chatBg: '220 30% 6%' },
+  { name: 'Purple Night', bg: '270 25% 8%', panel: '270 20% 12%', primary: '270 80% 60%', bubbleIn: '270 18% 18%', bubbleOut: '270 60% 90%', chatBg: '270 25% 6%' },
+  { name: 'Rose', bg: '340 20% 8%', panel: '340 18% 12%', primary: '340 80% 55%', bubbleIn: '340 16% 18%', bubbleOut: '340 60% 90%', chatBg: '340 20% 6%' },
+  { name: 'Emerald', bg: '160 25% 5%', panel: '160 20% 10%', primary: '160 80% 40%', bubbleIn: '160 18% 16%', bubbleOut: '160 60% 88%', chatBg: '160 25% 4%' },
 ];
+
+const RADIUS_OPTIONS = [
+  { label: 'Square', value: 'none', css: '0px' },
+  { label: 'Slight', value: 'sm', css: '4px' },
+  { label: 'Rounded', value: 'lg', css: '12px' },
+  { label: 'Pill', value: 'xl', css: '20px' },
+];
+
+const applyThemeVars = (theme: typeof THEMES[0]) => {
+  const r = document.documentElement.style;
+  r.setProperty('--background', theme.bg);
+  r.setProperty('--wa-panel', theme.panel);
+  r.setProperty('--primary', theme.primary);
+  r.setProperty('--ring', theme.primary);
+  r.setProperty('--wa-bubble-in', theme.bubbleIn);
+  r.setProperty('--wa-green-light', theme.bubbleOut);
+  r.setProperty('--wa-chat-bg', theme.chatBg);
+  r.setProperty('--sidebar-background', theme.panel);
+  r.setProperty('--wa-header', theme.bubbleIn);
+  r.setProperty('--card', theme.panel);
+};
+
+export const applyBubbleRadius = (value: string) => {
+  const opt = RADIUS_OPTIONS.find(o => o.value === value) || RADIUS_OPTIONS[2];
+  document.documentElement.style.setProperty('--bubble-radius', opt.css);
+};
+
+export const loadSavedTheme = () => {
+  const savedTheme = localStorage.getItem('chat-theme');
+  if (savedTheme) {
+    try {
+      applyThemeVars(JSON.parse(savedTheme));
+    } catch {}
+  }
+  const savedRadius = localStorage.getItem('bubble-radius') || 'lg';
+  applyBubbleRadius(savedRadius);
+};
 
 const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
   const [displayName, setDisplayName] = useState(me.display_name);
@@ -28,6 +65,8 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [saveOnline, setSaveOnline] = useState(true);
+  const [bubbleRadius, setBubbleRadius] = useState(() => localStorage.getItem('bubble-radius') || 'lg');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const updateProfile = async () => {
@@ -74,13 +113,25 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
     setShowPasswordChange(false);
   };
 
-  const applyTheme = (theme: typeof THEMES[0]) => {
-    document.documentElement.style.setProperty('--background', theme.bg);
-    document.documentElement.style.setProperty('--wa-panel', theme.panel);
-    document.documentElement.style.setProperty('--primary', theme.primary);
-    document.documentElement.style.setProperty('--ring', theme.primary);
+  const applyTheme = async (theme: typeof THEMES[0]) => {
+    applyThemeVars(theme);
     localStorage.setItem('chat-theme', JSON.stringify(theme));
-    toast.success(`Theme "${theme.name}" applied!`);
+
+    if (saveOnline) {
+      await supabase.from('profiles').update({ chat_theme: theme as any }).eq('id', me.id);
+    }
+    toast.success(`Theme "${theme.name}" applied${saveOnline ? ' & synced' : ' locally'}!`);
+  };
+
+  const handleRadiusChange = async (value: string) => {
+    setBubbleRadius(value);
+    applyBubbleRadius(value);
+    localStorage.setItem('bubble-radius', value);
+
+    if (saveOnline) {
+      await supabase.from('profiles').update({ bubble_radius: value } as any).eq('id', me.id);
+    }
+    toast.success('Chat bubble style updated!');
   };
 
   const inputClass = "bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full";
@@ -132,11 +183,22 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
       </div>
 
       {/* Theme */}
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Palette size={16} className="text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Chat Theme</h3>
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Palette size={16} className="text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Chat Theme</h3>
+          </div>
+          <button
+            onClick={() => setSaveOnline(!saveOnline)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${saveOnline ? 'bg-primary/20 border-primary text-primary' : 'border-border text-muted-foreground'}`}
+          >
+            {saveOnline ? '☁️ Online' : '💾 Local'}
+          </button>
         </div>
+        <p className="text-[11px] text-muted-foreground mb-2">
+          {saveOnline ? 'Theme syncs across all your devices' : 'Theme saved on this device only'}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map(theme => (
             <button
@@ -146,6 +208,31 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
             >
               <div className="w-6 h-6 rounded-full border border-border" style={{ background: `hsl(${theme.primary})` }} />
               <span className="text-xs text-foreground">{theme.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bubble Radius */}
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Circle size={16} className="text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Chat Bubble Style</h3>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {RADIUS_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleRadiusChange(opt.value)}
+              className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-colors ${
+                bubbleRadius === opt.value ? 'border-primary bg-primary/10' : 'border-border hover:border-muted-foreground'
+              }`}
+            >
+              <div
+                className="w-10 h-6 bg-primary/60"
+                style={{ borderRadius: opt.css }}
+              />
+              <span className="text-[10px] text-muted-foreground">{opt.label}</span>
             </button>
           ))}
         </div>

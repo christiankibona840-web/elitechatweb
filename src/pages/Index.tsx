@@ -4,6 +4,7 @@ import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
+import { loadSavedTheme } from '@/components/SettingsPanel';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
@@ -19,17 +20,8 @@ const Index = () => {
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
   useEffect(() => {
-    // Apply saved theme
-    const savedTheme = localStorage.getItem('chat-theme');
-    if (savedTheme) {
-      try {
-        const theme = JSON.parse(savedTheme);
-        document.documentElement.style.setProperty('--background', theme.bg);
-        document.documentElement.style.setProperty('--wa-panel', theme.panel);
-        document.documentElement.style.setProperty('--primary', theme.primary);
-        document.documentElement.style.setProperty('--ring', theme.primary);
-      } catch {}
-    }
+    // Apply saved theme & bubble radius
+    loadSavedTheme();
 
     // Check if user has seen this version
     const seenVersion = localStorage.getItem('app-version-seen');
@@ -96,6 +88,17 @@ const Index = () => {
 
     if (data) {
       await supabase.from('profiles').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId);
+
+      // Load online theme if available
+      if ((data as any)?.chat_theme) {
+        const theme = (data as any).chat_theme;
+        localStorage.setItem('chat-theme', JSON.stringify(theme));
+        loadSavedTheme();
+      }
+      if ((data as any)?.bubble_radius) {
+        localStorage.setItem('bubble-radius', (data as any).bubble_radius);
+        loadSavedTheme();
+      }
     }
   };
 

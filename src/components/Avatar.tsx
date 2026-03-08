@@ -1,3 +1,4 @@
+import React from 'react';
 import { avatarColor } from '@/lib/chatStore';
 
 interface AvatarProps {
@@ -7,10 +8,10 @@ interface AvatarProps {
   avatarUrl?: string | null;
 }
 
-const Avatar = ({ name, size = 40, online, avatarUrl }: AvatarProps) => {
+const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(({ name, size = 40, online, avatarUrl }, ref) => {
   const fontSize = Math.round(size * 0.38);
   return (
-    <div className="relative flex-shrink-0">
+    <div ref={ref} className="relative flex-shrink-0">
       {avatarUrl ? (
         <img
           src={avatarUrl}
@@ -31,6 +32,8 @@ const Avatar = ({ name, size = 40, online, avatarUrl }: AvatarProps) => {
       )}
     </div>
   );
-};
+});
+
+Avatar.displayName = 'Avatar';
 
 export default Avatar;

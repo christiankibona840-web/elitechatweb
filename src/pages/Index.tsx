@@ -19,17 +19,8 @@ const Index = () => {
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
   useEffect(() => {
-    // Apply saved theme
-    const savedTheme = localStorage.getItem('chat-theme');
-    if (savedTheme) {
-      try {
-        const theme = JSON.parse(savedTheme);
-        document.documentElement.style.setProperty('--background', theme.bg);
-        document.documentElement.style.setProperty('--wa-panel', theme.panel);
-        document.documentElement.style.setProperty('--primary', theme.primary);
-        document.documentElement.style.setProperty('--ring', theme.primary);
-      } catch {}
-    }
+    // Apply saved theme & bubble radius
+    loadSavedTheme();
 
     // Check if user has seen this version
     const seenVersion = localStorage.getItem('app-version-seen');

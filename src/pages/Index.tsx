@@ -19,12 +19,10 @@ const Index = () => {
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Apply saved theme & bubble radius
     loadSavedTheme();
-
-    // Check if user has seen this version
     const seenVersion = localStorage.getItem('app-version-seen');
     if (seenVersion && seenVersion !== APP_VERSION) {
       setShowUpdateAlert(true);
@@ -48,14 +46,12 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Request notification permission
   useEffect(() => {
     if (session && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, [session]);
 
-  // Listen for new messages for push notifications
   useEffect(() => {
     if (!profile) return;
 
@@ -90,7 +86,6 @@ const Index = () => {
     if (data) {
       await supabase.from('profiles').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId);
 
-      // Load online theme if available
       if ((data as any)?.chat_theme) {
         const theme = (data as any).chat_theme;
         localStorage.setItem('chat-theme', JSON.stringify(theme));
@@ -135,7 +130,6 @@ const Index = () => {
     return <AuthScreen onLogin={() => {}} />;
   }
 
-  const isMobile = useIsMobile();
   const showChatArea = !isMobile || activeChat;
   const showSidebar = !isMobile || !activeChat;
 

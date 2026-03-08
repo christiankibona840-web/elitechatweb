@@ -1,5 +1,6 @@
 import React from 'react';
 import { avatarColor } from '@/lib/chatStore';
+// forwardRef avatar component
 
 interface AvatarProps {
   name: string;

@@ -27,7 +27,7 @@ const TypingIndicator = () => (
   </div>
 );
 
-const ChatArea = ({ me, activeChat, onMessagesChanged }: ChatAreaProps) => {
+const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [contactProfile, setContactProfile] = useState<Profile | null>(null);

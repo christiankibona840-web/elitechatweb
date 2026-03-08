@@ -1,9 +1,15 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Avatar from './Avatar';
-import { Camera, Save, Key, User, Palette, Circle } from 'lucide-react';
+import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+
+import wallpaperGeometric from '@/assets/wallpaper-geometric.jpg';
+import wallpaperGalaxy from '@/assets/wallpaper-galaxy.jpg';
+import wallpaperForest from '@/assets/wallpaper-forest.jpg';
+import wallpaperOcean from '@/assets/wallpaper-ocean.jpg';
+import wallpaperCity from '@/assets/wallpaper-city.jpg';
 
 type Profile = Tables<'profiles'>;
 
@@ -18,6 +24,15 @@ const THEMES = [
   { name: 'Purple Night', bg: '270 25% 8%', panel: '270 20% 12%', primary: '270 80% 60%', bubbleIn: '270 18% 18%', bubbleOut: '270 60% 90%', chatBg: '270 25% 6%' },
   { name: 'Rose', bg: '340 20% 8%', panel: '340 18% 12%', primary: '340 80% 55%', bubbleIn: '340 16% 18%', bubbleOut: '340 60% 90%', chatBg: '340 20% 6%' },
   { name: 'Emerald', bg: '160 25% 5%', panel: '160 20% 10%', primary: '160 80% 40%', bubbleIn: '160 18% 16%', bubbleOut: '160 60% 88%', chatBg: '160 25% 4%' },
+];
+
+const WALLPAPERS = [
+  { name: 'None', src: '', thumb: '' },
+  { name: 'Geometric', src: wallpaperGeometric, thumb: wallpaperGeometric },
+  { name: 'Galaxy', src: wallpaperGalaxy, thumb: wallpaperGalaxy },
+  { name: 'Forest', src: wallpaperForest, thumb: wallpaperForest },
+  { name: 'Ocean', src: wallpaperOcean, thumb: wallpaperOcean },
+  { name: 'City', src: wallpaperCity, thumb: wallpaperCity },
 ];
 
 const RADIUS_OPTIONS = [
@@ -46,6 +61,13 @@ export const applyBubbleRadius = (value: string) => {
   document.documentElement.style.setProperty('--bubble-radius', opt.css);
 };
 
+export const applyWallpaper = (src: string) => {
+  // Store globally for ChatArea to pick up
+  (window as any).__chatWallpaper = src;
+  // Dispatch event for live update
+  window.dispatchEvent(new CustomEvent('wallpaper-change', { detail: src }));
+};
+
 export const loadSavedTheme = () => {
   const savedTheme = localStorage.getItem('chat-theme');
   if (savedTheme) {
@@ -55,6 +77,8 @@ export const loadSavedTheme = () => {
   }
   const savedRadius = localStorage.getItem('bubble-radius') || 'lg';
   applyBubbleRadius(savedRadius);
+  const savedWallpaper = localStorage.getItem('chat-wallpaper') || '';
+  applyWallpaper(savedWallpaper);
 };
 
 const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
@@ -67,6 +91,7 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saveOnline, setSaveOnline] = useState(true);
   const [bubbleRadius, setBubbleRadius] = useState(() => localStorage.getItem('bubble-radius') || 'lg');
+  const [activeWallpaper, setActiveWallpaper] = useState(() => localStorage.getItem('chat-wallpaper') || '');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const updateProfile = async () => {
@@ -132,6 +157,13 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
       await supabase.from('profiles').update({ bubble_radius: value } as any).eq('id', me.id);
     }
     toast.success('Chat bubble style updated!');
+  };
+
+  const handleWallpaperChange = (src: string) => {
+    setActiveWallpaper(src);
+    localStorage.setItem('chat-wallpaper', src);
+    applyWallpaper(src);
+    toast.success(src ? 'Wallpaper applied!' : 'Wallpaper removed!');
   };
 
   const inputClass = "bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full";
@@ -208,6 +240,36 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
             >
               <div className="w-6 h-6 rounded-full border border-border" style={{ background: `hsl(${theme.primary})` }} />
               <span className="text-xs text-foreground">{theme.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Wallpaper */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center gap-2 mb-3">
+          <ImageIcon size={16} className="text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Chat Wallpaper</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {WALLPAPERS.map(wp => (
+            <button
+              key={wp.name}
+              onClick={() => handleWallpaperChange(wp.src)}
+              className={`relative rounded-lg overflow-hidden border-2 transition-colors aspect-square ${
+                activeWallpaper === wp.src ? 'border-primary' : 'border-border hover:border-muted-foreground'
+              }`}
+            >
+              {wp.src ? (
+                <img src={wp.thumb} alt={wp.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-wa-chat-bg flex items-center justify-center">
+                  <span className="text-[10px] text-muted-foreground">None</span>
+                </div>
+              )}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] text-white text-center py-0.5">
+                {wp.name}
+              </div>
             </button>
           ))}
         </div>

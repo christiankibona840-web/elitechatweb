@@ -88,6 +88,17 @@ const Index = () => {
 
     if (data) {
       await supabase.from('profiles').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId);
+
+      // Load online theme if available
+      if ((data as any)?.chat_theme) {
+        const theme = (data as any).chat_theme;
+        localStorage.setItem('chat-theme', JSON.stringify(theme));
+        loadSavedTheme();
+      }
+      if ((data as any)?.bubble_radius) {
+        localStorage.setItem('bubble-radius', (data as any).bubble_radius);
+        loadSavedTheme();
+      }
     }
   };
 

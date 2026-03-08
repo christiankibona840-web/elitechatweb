@@ -5,6 +5,7 @@ import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
 import { loadSavedTheme } from '@/components/SettingsPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
@@ -134,6 +135,10 @@ const Index = () => {
     return <AuthScreen onLogin={() => {}} />;
   }
 
+  const isMobile = useIsMobile();
+  const showChatArea = !isMobile || activeChat;
+  const showSidebar = !isMobile || !activeChat;
+
   return (
     <div className="flex h-screen overflow-hidden">
       {showUpdateAlert && (
@@ -142,19 +147,24 @@ const Index = () => {
           onDismiss={() => setShowUpdateAlert(false)}
         />
       )}
-      <ChatSidebar
-        me={profile}
-        activeChat={activeChat}
-        onSelectChat={setActiveChat}
-        onLogout={handleLogout}
-        refreshKey={refreshKey}
-        onProfileUpdate={handleProfileUpdate}
-      />
-      <ChatArea
-        me={profile}
-        activeChat={activeChat}
-        onMessagesChanged={handleMessagesChanged}
-      />
+      {showSidebar && (
+        <ChatSidebar
+          me={profile}
+          activeChat={activeChat}
+          onSelectChat={setActiveChat}
+          onLogout={handleLogout}
+          refreshKey={refreshKey}
+          onProfileUpdate={handleProfileUpdate}
+        />
+      )}
+      {showChatArea && (
+        <ChatArea
+          me={profile}
+          activeChat={activeChat}
+          onMessagesChanged={handleMessagesChanged}
+          onBack={isMobile ? () => setActiveChat(null) : undefined}
+        />
+      )}
     </div>
   );
 };

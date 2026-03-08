@@ -5,11 +5,11 @@ import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon } from 'lu
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
-import wallpaperGeometric from '@/assets/wallpaper-geometric.jpg';
-import wallpaperGalaxy from '@/assets/wallpaper-galaxy.jpg';
-import wallpaperForest from '@/assets/wallpaper-forest.jpg';
-import wallpaperOcean from '@/assets/wallpaper-ocean.jpg';
-import wallpaperCity from '@/assets/wallpaper-city.jpg';
+import wallpaperNeon from '@/assets/wallpaper-neon.png';
+import wallpaperAurora from '@/assets/wallpaper-aurora.png';
+import wallpaperSunset from '@/assets/wallpaper-sunset.png';
+import wallpaperNebula from '@/assets/wallpaper-nebula.png';
+import wallpaperSakura from '@/assets/wallpaper-sakura.png';
 
 type Profile = Tables<'profiles'>;
 
@@ -28,11 +28,11 @@ const THEMES = [
 
 const WALLPAPERS = [
   { name: 'None', src: '', thumb: '' },
-  { name: 'Geometric', src: wallpaperGeometric, thumb: wallpaperGeometric },
-  { name: 'Galaxy', src: wallpaperGalaxy, thumb: wallpaperGalaxy },
-  { name: 'Forest', src: wallpaperForest, thumb: wallpaperForest },
-  { name: 'Ocean', src: wallpaperOcean, thumb: wallpaperOcean },
-  { name: 'City', src: wallpaperCity, thumb: wallpaperCity },
+  { name: 'Neon', src: wallpaperNeon, thumb: wallpaperNeon },
+  { name: 'Aurora', src: wallpaperAurora, thumb: wallpaperAurora },
+  { name: 'Sunset', src: wallpaperSunset, thumb: wallpaperSunset },
+  { name: 'Nebula', src: wallpaperNebula, thumb: wallpaperNebula },
+  { name: 'Sakura', src: wallpaperSakura, thumb: wallpaperSakura },
 ];
 
 const RADIUS_OPTIONS = [

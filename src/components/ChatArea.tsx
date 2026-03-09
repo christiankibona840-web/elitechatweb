@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fmtTime, fmtDate } from '@/lib/chatStore';
 import Avatar from './Avatar';
 import VoiceRecorder from './VoiceRecorder';
-import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft } from 'lucide-react';
+import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Reply } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -33,6 +33,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [contactProfile, setContactProfile] = useState<Profile | null>(null);
   const [groupInfo, setGroupInfo] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; content: string; sender_name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
@@ -205,6 +206,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         file_url: fileData?.url || null,
         file_name: fileData?.name || null,
         file_type: fileData?.type || null,
+        reply_to: replyTo ? { id: replyTo.id, content: replyTo.content, sender_name: replyTo.sender_name } : null,
       };
       const { data, error } = await supabase.from('messages').insert(msg).select().single();
       if (error) { toast.error('Failed to send message'); setUploading(false); return; }
@@ -217,6 +219,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         file_url: fileData?.url || null,
         file_name: fileData?.name || null,
         file_type: fileData?.type || null,
+        reply_to: replyTo ? { id: replyTo.id, content: replyTo.content, sender_name: replyTo.sender_name } : null,
       };
       const { data, error } = await supabase.from('group_messages').insert(msg).select('*, profiles!group_messages_sender_id_fkey(display_name)').single();
       if (error) { toast.error('Failed to send message'); setUploading(false); return; }
@@ -224,6 +227,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     }
 
     setInput('');
+    setReplyTo(null);
     setUploading(false);
     setShowRecorder(false);
     onMessagesChanged();
@@ -331,15 +335,26 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           if (dateStr !== lastDate) { showDate = true; lastDate = dateStr; }
           const isMe = msg.sender_id === me.id;
           const senderName = activeChat.type === 'group' && !isMe ? (msg.profiles?.display_name || '') : '';
+          const replyData = msg.reply_to as { id: string; content: string; sender_name: string } | null;
+
+          const handleReply = () => {
+            const name = isMe ? 'You' : (senderName || contactProfile?.display_name || 'Unknown');
+            setReplyTo({ id: msg.id, content: msg.content || (msg.file_name ? `📎 ${msg.file_name}` : ''), sender_name: name });
+          };
 
           return (
-            <div key={msg.id}>
+            <div key={msg.id} id={`msg-${msg.id}`}>
               {showDate && (
                 <div className="text-center my-3">
                   <span className="bg-accent border border-border text-muted-foreground text-xs px-3 py-1 rounded-lg">{dateStr}</span>
                 </div>
               )}
-              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] ${isMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                {!isMe && (
+                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
+                    <Reply size={14} />
+                  </button>
+                )}
                 <div className={`max-w-[65%] px-3 py-1.5 text-sm leading-relaxed break-words shadow-sm relative ${
                   isMe
                     ? 'bg-wa-green-light text-[hsl(var(--wa-bubble-out-text))]'
@@ -348,6 +363,14 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   borderRadius: `var(--bubble-radius)`,
                   ...(isMe ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }),
                 }}>
+                  {replyData && (
+                    <div className="border-l-2 border-primary bg-primary/10 rounded px-2 py-1 mb-1 cursor-pointer" onClick={() => {
+                      document.getElementById(`msg-${replyData.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}>
+                      <div className="text-[11px] font-semibold text-primary">{replyData.sender_name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{replyData.content || '📎 Attachment'}</div>
+                    </div>
+                  )}
                   {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
                   {renderFilePreview(msg)}
                   {msg.content && <div>{msg.content}</div>}
@@ -362,6 +385,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                     )}
                   </div>
                 </div>
+                {isMe && (
+                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
+                    <Reply size={14} />
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -378,6 +406,19 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             <span className="text-xs text-foreground truncate">{file.name}</span>
           </div>
           <button onClick={() => setFile(null)} className="text-wa-icon hover:text-destructive">
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Reply preview */}
+      {replyTo && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-wa-header border-t border-border">
+          <div className="flex-1 border-l-2 border-primary bg-primary/10 rounded px-3 py-2">
+            <div className="text-xs font-semibold text-primary">{replyTo.sender_name}</div>
+            <div className="text-xs text-muted-foreground truncate">{replyTo.content || '📎 Attachment'}</div>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-wa-icon hover:text-destructive">
             <X size={18} />
           </button>
         </div>

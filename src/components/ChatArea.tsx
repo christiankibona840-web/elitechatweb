@@ -422,7 +422,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             <X size={18} />
           </button>
         </div>
-      )
+      )}
 
       {/* Voice recorder */}
       {showRecorder && (

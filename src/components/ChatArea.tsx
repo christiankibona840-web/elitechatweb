@@ -33,6 +33,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [contactProfile, setContactProfile] = useState<Profile | null>(null);
   const [groupInfo, setGroupInfo] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; content: string; sender_name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);

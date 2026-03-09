@@ -92,20 +92,14 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
         return;
       }
 
-      // Step 3: Determine roles for selected members
-      const selectedProfiles = contacts.filter(c => selected.includes(c.id));
-      const maleAdmin = selectedProfiles.find(p => p.gender === 'male');
-      const femaleAdmin = selectedProfiles.find(p => p.gender === 'female');
-
-      // Step 4: Add members one by one to avoid batch RLS issues
+      // Step 3: Add selected members
       for (const uid of selected) {
-        const isSecondAdmin = (maleAdmin && uid === maleAdmin.id) || (femaleAdmin && uid === femaleAdmin.id);
         const { error: memberError } = await supabase
           .from('group_members')
           .insert({
             group_id: group.id,
             user_id: uid,
-            role: isSecondAdmin ? 'admin' : 'member',
+            role: 'member',
           });
 
         if (memberError) {
@@ -113,8 +107,7 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
         }
       }
 
-      const adminCount = 1 + (maleAdmin ? 1 : 0) + (femaleAdmin && femaleAdmin.id !== maleAdmin?.id ? 1 : 0);
-      toast.success(`✅ Group "${name}" created with ${adminCount} admin(s)`);
+      toast.success(`✅ Group "${name}" created with ${selected.length + 1} members`);
       onCreated(group.id);
     } catch (err) {
       toast.error('Something went wrong creating the group');

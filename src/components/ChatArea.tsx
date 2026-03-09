@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fmtTime, fmtDate } from '@/lib/chatStore';
 import Avatar from './Avatar';
 import VoiceRecorder from './VoiceRecorder';
-import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft } from 'lucide-react';
+import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Reply } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 

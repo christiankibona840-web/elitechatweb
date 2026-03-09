@@ -206,6 +206,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         file_url: fileData?.url || null,
         file_name: fileData?.name || null,
         file_type: fileData?.type || null,
+        reply_to: replyTo ? { id: replyTo.id, content: replyTo.content, sender_name: replyTo.sender_name } : null,
       };
       const { data, error } = await supabase.from('messages').insert(msg).select().single();
       if (error) { toast.error('Failed to send message'); setUploading(false); return; }
@@ -218,6 +219,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         file_url: fileData?.url || null,
         file_name: fileData?.name || null,
         file_type: fileData?.type || null,
+        reply_to: replyTo ? { id: replyTo.id, content: replyTo.content, sender_name: replyTo.sender_name } : null,
       };
       const { data, error } = await supabase.from('group_messages').insert(msg).select('*, profiles!group_messages_sender_id_fkey(display_name)').single();
       if (error) { toast.error('Failed to send message'); setUploading(false); return; }
@@ -225,6 +227,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     }
 
     setInput('');
+    setReplyTo(null);
     setUploading(false);
     setShowRecorder(false);
     onMessagesChanged();

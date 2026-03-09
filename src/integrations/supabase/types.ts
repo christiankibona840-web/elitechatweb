@@ -93,6 +93,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string | null
+          deleted_for_everyone: boolean | null
           file_name: string | null
           file_type: string | null
           file_url: string | null
@@ -104,6 +105,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string | null
+          deleted_for_everyone?: boolean | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -115,6 +117,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string | null
+          deleted_for_everyone?: boolean | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -175,10 +178,46 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: string
+          message_id: string
+          message_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: string
+          message_id: string
+          message_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          message_id?: string
+          message_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string | null
           created_at: string | null
+          deleted_for_everyone: boolean | null
           file_name: string | null
           file_type: string | null
           file_url: string | null
@@ -191,6 +230,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string | null
+          deleted_for_everyone?: boolean | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -203,6 +243,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string | null
+          deleted_for_everyone?: boolean | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null

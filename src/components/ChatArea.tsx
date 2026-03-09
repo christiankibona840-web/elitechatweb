@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { fmtTime, fmtDate } from '@/lib/chatStore';
 import Avatar from './Avatar';
 import VoiceRecorder from './VoiceRecorder';
-import { Trash2, Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Reply } from 'lucide-react';
+import MessageActions from './MessageActions';
+import ForwardModal from './ForwardModal';
+import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -38,6 +40,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [isTyping, setIsTyping] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
   const [wallpaper, setWallpaper] = useState<string>(() => (window as any).__chatWallpaper || '');
+  const [reactions, setReactions] = useState<Record<string, { emoji: string; user_id: string }[]>>({});
+  const [forwardMsg, setForwardMsg] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,6 +74,13 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             markAsRead(activeChat.id);
             onMessagesChanged();
           }
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        }, (payload) => {
+          setMessages(prev => prev.map(m => m.id === (payload.new as any).id ? { ...m, ...payload.new } : m));
         })
         .subscribe();
 
@@ -111,11 +122,60 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             });
           }
         })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'group_messages',
+        }, (payload) => {
+          setMessages(prev => prev.map(m => m.id === (payload.new as any).id ? { ...m, ...payload.new } : m));
+        })
         .subscribe();
 
       return () => { supabase.removeChannel(channel); };
     }
   }, [activeChat?.type, activeChat?.id]);
+
+  // Load reactions for visible messages
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const msgIds = messages.map(m => m.id);
+    supabase
+      .from('message_reactions')
+      .select('*')
+      .in('message_id', msgIds)
+      .then(({ data }) => {
+        if (!data) return;
+        const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
+        data.forEach((r: any) => {
+          if (!grouped[r.message_id]) grouped[r.message_id] = [];
+          grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
+        });
+        setReactions(grouped);
+      });
+  }, [messages]);
+
+  // Realtime reactions
+  useEffect(() => {
+    const ch = supabase
+      .channel('reactions-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, () => {
+        // Reload reactions
+        if (messages.length > 0) {
+          const msgIds = messages.map(m => m.id);
+          supabase.from('message_reactions').select('*').in('message_id', msgIds).then(({ data }) => {
+            if (!data) return;
+            const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
+            data.forEach((r: any) => {
+              if (!grouped[r.message_id]) grouped[r.message_id] = [];
+              grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
+            });
+            setReactions(grouped);
+          });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -233,14 +293,31 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     onMessagesChanged();
   };
 
-  const deleteChat = async () => {
-    if (!activeChat || !confirm('Are you sure you want to delete this entire conversation?')) return;
-    if (activeChat.type === 'dm') {
-      await supabase.from('messages').delete()
-        .or(`and(sender_id.eq.${me.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${me.id})`);
+  const deleteForEveryone = async (msg: any) => {
+    if (!confirm('Delete this message for everyone?')) return;
+    const table = activeChat?.type === 'dm' ? 'messages' : 'group_messages';
+    await supabase.from(table).update({ 
+      content: null, 
+      file_url: null, 
+      file_name: null, 
+      file_type: null, 
+      deleted_for_everyone: true 
+    }).eq('id', msg.id);
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: null, file_url: null, deleted_for_everyone: true } : m));
+    toast.success('Message deleted');
+  };
+
+  const toggleReaction = async (msgId: string, emoji: string) => {
+    const msgType = activeChat?.type === 'dm' ? 'dm' : 'group';
+    const existing = reactions[msgId]?.find(r => r.emoji === emoji && r.user_id === me.id);
+    if (existing) {
+      await supabase.from('message_reactions').delete()
+        .eq('message_id', msgId).eq('user_id', me.id).eq('emoji', emoji);
+    } else {
+      await supabase.from('message_reactions').insert({
+        message_id: msgId, user_id: me.id, emoji, message_type: msgType,
+      });
     }
-    setMessages([]);
-    onMessagesChanged();
   };
 
   if (!activeChat) {
@@ -289,9 +366,41 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     );
   };
 
+  const renderReactions = (msgId: string) => {
+    const msgReactions = reactions[msgId];
+    if (!msgReactions || msgReactions.length === 0) return null;
+    
+    // Group by emoji
+    const grouped: Record<string, number> = {};
+    msgReactions.forEach(r => { grouped[r.emoji] = (grouped[r.emoji] || 0) + 1; });
+    
+    return (
+      <div className="flex gap-0.5 mt-0.5 flex-wrap">
+        {Object.entries(grouped).map(([emoji, count]) => {
+          const myReaction = msgReactions.some(r => r.emoji === emoji && r.user_id === me.id);
+          return (
+            <button key={emoji} onClick={() => toggleReaction(msgId, emoji)}
+              className={`text-xs px-1.5 py-0.5 rounded-full border transition-colors ${myReaction ? 'bg-primary/20 border-primary/40' : 'bg-accent/50 border-border'}`}>
+              {emoji} {count > 1 ? count : ''}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const chatBgStyle: React.CSSProperties = wallpaper
     ? { backgroundImage: `url(${wallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
     : {};
+
+  // Read receipt rendering
+  const renderTicks = (msg: any) => {
+    if (!msg.sender_id || msg.sender_id !== me.id || activeChat.type !== 'dm') return null;
+    if (msg.status === 'read') {
+      return <span className="text-xs text-blue-500 ml-0.5">✓✓</span>;
+    }
+    return <span className="text-xs text-muted-foreground ml-0.5">✓✓</span>;
+  };
 
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0">
@@ -311,11 +420,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             </div>
           </div>
         </div>
-        {activeChat.type === 'dm' && (
-          <button onClick={deleteChat} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Delete chat">
-            <Trash2 size={18} />
-          </button>
-        )}
       </div>
 
       {/* Messages */}
@@ -336,6 +440,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           const isMe = msg.sender_id === me.id;
           const senderName = activeChat.type === 'group' && !isMe ? (msg.profiles?.display_name || '') : '';
           const replyData = msg.reply_to as { id: string; content: string; sender_name: string } | null;
+          const isDeleted = msg.deleted_for_everyone;
 
           const handleReply = () => {
             const name = isMe ? 'You' : (senderName || contactProfile?.display_name || 'Unknown');
@@ -350,10 +455,14 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                 </div>
               )}
               <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                {!isMe && (
-                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
-                    <Reply size={14} />
-                  </button>
+                {!isMe && !isDeleted && (
+                  <MessageActions
+                    isMe={false}
+                    onReply={handleReply}
+                    onDelete={() => {}}
+                    onForward={() => setForwardMsg(msg)}
+                    onReact={(emoji) => toggleReaction(msg.id, emoji)}
+                  />
                 )}
                 <div className={`max-w-[65%] px-3 py-1.5 text-sm leading-relaxed break-words shadow-sm relative ${
                   isMe
@@ -363,32 +472,39 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   borderRadius: `var(--bubble-radius)`,
                   ...(isMe ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }),
                 }}>
-                  {replyData && (
-                    <div className="border-l-2 border-primary bg-primary/10 rounded px-2 py-1 mb-1 cursor-pointer" onClick={() => {
-                      document.getElementById(`msg-${replyData.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}>
-                      <div className="text-[11px] font-semibold text-primary">{replyData.sender_name}</div>
-                      <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{replyData.content || '📎 Attachment'}</div>
-                    </div>
+                  {isDeleted ? (
+                    <div className="italic text-muted-foreground text-xs">🚫 This message was deleted</div>
+                  ) : (
+                    <>
+                      {replyData && (
+                        <div className="border-l-2 border-primary bg-primary/10 rounded px-2 py-1 mb-1 cursor-pointer" onClick={() => {
+                          document.getElementById(`msg-${replyData.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}>
+                          <div className="text-[11px] font-semibold text-primary">{replyData.sender_name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{replyData.content || '📎 Attachment'}</div>
+                        </div>
+                      )}
+                      {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
+                      {renderFilePreview(msg)}
+                      {msg.content && <div>{msg.content}</div>}
+                    </>
                   )}
-                  {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
-                  {renderFilePreview(msg)}
-                  {msg.content && <div>{msg.content}</div>}
                   <div className="flex items-center justify-end gap-1 mt-0.5">
                     <span className={`text-[10px] ${isMe ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                       {fmtTime(msg.created_at)}
                     </span>
-                    {isMe && activeChat.type === 'dm' && (
-                      <span className="text-xs text-muted-foreground ml-0.5">
-                        {msg.status === 'read' ? '✓✓' : '✓'}
-                      </span>
-                    )}
+                    {renderTicks(msg)}
                   </div>
+                  {!isDeleted && renderReactions(msg.id)}
                 </div>
-                {isMe && (
-                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
-                    <Reply size={14} />
-                  </button>
+                {isMe && !isDeleted && (
+                  <MessageActions
+                    isMe={true}
+                    onReply={handleReply}
+                    onDelete={() => deleteForEveryone(msg)}
+                    onForward={() => setForwardMsg(msg)}
+                    onReact={(emoji) => toggleReaction(msg.id, emoji)}
+                  />
                 )}
               </div>
             </div>
@@ -465,6 +581,16 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           </button>
         )}
       </div>
+
+      {/* Forward modal */}
+      {forwardMsg && (
+        <ForwardModal
+          me={me}
+          message={forwardMsg}
+          onClose={() => setForwardMsg(null)}
+          onForwarded={onMessagesChanged}
+        />
+      )}
     </div>
   );
 };

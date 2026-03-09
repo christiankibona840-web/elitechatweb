@@ -145,7 +145,7 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
                 <Avatar name={c.display_name} size={40} avatarUrl={c.avatar_url} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-foreground truncate">{c.display_name}</div>
-                  <div className="text-xs text-muted-foreground">@{c.username} {c.gender ? `· ${c.gender === 'male' ? '♂' : c.gender === 'female' ? '♀' : ''}` : ''}</div>
+                  <div className="text-xs text-muted-foreground">@{c.username}</div>
                 </div>
                 {selected.includes(c.id) && (
                   <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">

@@ -98,6 +98,7 @@ export type Database = {
           file_url: string | null
           group_id: string
           id: string
+          reply_to: Json | null
           sender_id: string
         }
         Insert: {
@@ -108,6 +109,7 @@ export type Database = {
           file_url?: string | null
           group_id: string
           id?: string
+          reply_to?: Json | null
           sender_id: string
         }
         Update: {
@@ -118,6 +120,7 @@ export type Database = {
           file_url?: string | null
           group_id?: string
           id?: string
+          reply_to?: Json | null
           sender_id?: string
         }
         Relationships: [
@@ -181,6 +184,7 @@ export type Database = {
           file_url: string | null
           id: string
           receiver_id: string
+          reply_to: Json | null
           sender_id: string
           status: string | null
         }
@@ -192,6 +196,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           receiver_id: string
+          reply_to?: Json | null
           sender_id: string
           status?: string | null
         }
@@ -203,6 +208,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           receiver_id?: string
+          reply_to?: Json | null
           sender_id?: string
           status?: string | null
         }

@@ -129,7 +129,7 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
 
         <div className="p-5 pb-3">
           <input className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full" placeholder="Group name" value={name} onChange={e => setName(e.target.value)} autoFocus />
-          <p className="text-xs text-muted-foreground mt-2">Select members (a male & female admin will be auto-assigned):</p>
+          <p className="text-xs text-muted-foreground mt-2">Select members to add:</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-3">

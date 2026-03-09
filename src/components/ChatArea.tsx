@@ -335,6 +335,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           if (dateStr !== lastDate) { showDate = true; lastDate = dateStr; }
           const isMe = msg.sender_id === me.id;
           const senderName = activeChat.type === 'group' && !isMe ? (msg.profiles?.display_name || '') : '';
+          const replyData = msg.reply_to as { id: string; content: string; sender_name: string } | null;
+
+          const handleReply = () => {
+            const name = isMe ? 'You' : (senderName || contactProfile?.display_name || 'Unknown');
+            setReplyTo({ id: msg.id, content: msg.content || (msg.file_name ? `📎 ${msg.file_name}` : ''), sender_name: name });
+          };
 
           return (
             <div key={msg.id}>
@@ -343,7 +349,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   <span className="bg-accent border border-border text-muted-foreground text-xs px-3 py-1 rounded-lg">{dateStr}</span>
                 </div>
               )}
-              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] ${isMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                {!isMe && (
+                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
+                    <Reply size={14} />
+                  </button>
+                )}
                 <div className={`max-w-[65%] px-3 py-1.5 text-sm leading-relaxed break-words shadow-sm relative ${
                   isMe
                     ? 'bg-wa-green-light text-[hsl(var(--wa-bubble-out-text))]'
@@ -352,6 +363,14 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   borderRadius: `var(--bubble-radius)`,
                   ...(isMe ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }),
                 }}>
+                  {replyData && (
+                    <div className="border-l-2 border-primary bg-primary/10 rounded px-2 py-1 mb-1 cursor-pointer" onClick={() => {
+                      document.getElementById(`msg-${replyData.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}>
+                      <div className="text-[11px] font-semibold text-primary">{replyData.sender_name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{replyData.content || '📎 Attachment'}</div>
+                    </div>
+                  )}
                   {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
                   {renderFilePreview(msg)}
                   {msg.content && <div>{msg.content}</div>}
@@ -366,6 +385,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                     )}
                   </div>
                 </div>
+                {isMe && (
+                  <button onClick={handleReply} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
+                    <Reply size={14} />
+                  </button>
+                )}
               </div>
             </div>
           );

@@ -19,6 +19,7 @@ const Index = () => {
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
+  const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -51,6 +52,39 @@ const Index = () => {
       Notification.requestPermission();
     }
   }, [session]);
+
+  // When profile loads and there's a pending target, look up the user and open chat
+  useEffect(() => {
+    if (!profile || !pendingTargetId) return;
+
+    const openTargetChat = async () => {
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('readable_id', pendingTargetId)
+        .single();
+
+      if (targetProfile) {
+        // Add as contact if not already
+        const { data: existing } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('user_id', profile.id)
+          .eq('contact_id', targetProfile.id)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('contacts').insert({ user_id: profile.id, contact_id: targetProfile.id });
+        }
+
+        setActiveChat({ type: 'dm', id: targetProfile.id });
+        setRefreshKey(k => k + 1);
+      }
+      setPendingTargetId(null);
+    };
+
+    openTargetChat();
+  }, [profile, pendingTargetId]);
 
   useEffect(() => {
     if (!profile) return;
@@ -115,6 +149,12 @@ const Index = () => {
     setProfile(updatedProfile);
   }, []);
 
+  const handleLogin = useCallback((targetReadableId?: string) => {
+    if (targetReadableId) {
+      setPendingTargetId(targetReadableId);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -127,7 +167,7 @@ const Index = () => {
   }
 
   if (!session || !profile) {
-    return <AuthScreen onLogin={() => {}} />;
+    return <AuthScreen onLogin={handleLogin} />;
   }
 
   const showChatArea = !isMobile || activeChat;

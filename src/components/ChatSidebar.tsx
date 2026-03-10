@@ -250,7 +250,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
             </div>
             <button
               onClick={() => setTab('projects')}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${tab === 'projects' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-muted-foreground hover:bg-muted/30 hover:text-foreground"
               title="Project Zone"
             >
               <Rocket size={18} />

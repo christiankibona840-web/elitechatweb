@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Wrench, Code } from 'lucide-react';
 
 interface AuthScreenProps {
   onLogin: () => void;
@@ -15,6 +16,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hoveredContact, setHoveredContact] = useState<'designer' | 'developer' | null>(null);
 
   const submit = async () => {
     setError('');
@@ -125,6 +127,59 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
 
         <div className="text-center text-muted-foreground text-xs mt-5 flex items-center justify-center gap-1">
           🔒 Your conversations are secured by Lovable Cloud
+        </div>
+
+        {/* Contact buttons */}
+        <div className="flex justify-between mt-6 px-2">
+          {/* Designer button - left */}
+          <div className="relative"
+            onMouseEnter={() => setHoveredContact('designer')}
+            onMouseLeave={() => setHoveredContact(null)}
+          >
+            <button className="w-12 h-12 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/25 transition-all hover:scale-110">
+              <Wrench size={20} />
+            </button>
+            {hoveredContact === 'designer' && (
+              <div className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-xl p-3 shadow-xl z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">JS</div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">Json</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">ID: 0005</div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Chat with the portal structural designer for structure you want to be modified in the portal
+                </p>
+                <p className="text-[10px] text-primary mt-2 font-medium">Login or register first to chat →</p>
+              </div>
+            )}
+          </div>
+
+          {/* Developer button - right */}
+          <div className="relative"
+            onMouseEnter={() => setHoveredContact('developer')}
+            onMouseLeave={() => setHoveredContact(null)}
+          >
+            <button className="w-12 h-12 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/25 transition-all hover:scale-110">
+              <Code size={20} />
+            </button>
+            {hoveredContact === 'developer' && (
+              <div className="absolute bottom-full right-0 mb-2 w-64 bg-popover border border-border rounded-xl p-3 shadow-xl z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">CH</div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">Chris</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">ID: 0002</div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Chat with the portal developer for things you want to be added to the portal
+                </p>
+                <p className="text-[10px] text-primary mt-2 font-medium">Login or register first to chat →</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

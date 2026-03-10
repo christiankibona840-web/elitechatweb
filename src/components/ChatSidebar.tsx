@@ -7,7 +7,8 @@ import CreateGroupModal from './CreateGroupModal';
 import StatusPanel from './StatusPanel';
 import SettingsPanel from './SettingsPanel';
 import PeoplePanel from './PeoplePanel';
-import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe } from 'lucide-react';
+import ProjectZone from './ProjectZone';
+import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
@@ -36,7 +37,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [tab, setTab] = useState<'chats' | 'status' | 'people' | 'settings'>('chats');
+  const [tab, setTab] = useState<'chats' | 'status' | 'people' | 'settings' | 'projects'>('chats');
 
   useEffect(() => {
     loadConversations();
@@ -173,6 +174,9 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
         <button onClick={() => setTab('status')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'status' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
           <Camera size={13} /> Status
         </button>
+        <button onClick={() => setTab('projects')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
+          <Rocket size={13} /> Projects
+        </button>
         <button onClick={() => setTab('settings')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'settings' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
           <Settings size={13} /> Settings
         </button>
@@ -184,6 +188,8 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
         <SettingsPanel me={me} onProfileUpdate={onProfileUpdate} />
       ) : tab === 'people' ? (
         <PeoplePanel me={me} onStartChat={(userId) => { setTab('chats'); onSelectChat({ type: 'dm', id: userId }); }} />
+      ) : tab === 'projects' ? (
+        <ProjectZone me={me} />
       ) : (
         <>
           {/* Search */}

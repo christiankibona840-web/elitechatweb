@@ -174,9 +174,6 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
         <button onClick={() => setTab('status')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'status' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
           <Camera size={13} /> Status
         </button>
-        <button onClick={() => setTab('projects')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
-          <Rocket size={13} /> Projects
-        </button>
         <button onClick={() => setTab('settings')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'settings' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
           <Settings size={13} /> Settings
         </button>
@@ -242,13 +239,23 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
             )}
           </div>
 
-          {/* My ID */}
-          <div className="px-4 py-2.5 bg-accent/30 border-t border-border flex-shrink-0">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Your ID</div>
-            <div className="text-xs text-primary font-mono break-all mt-0.5 cursor-pointer hover:underline" onClick={copyId}>
-              {me.readable_id || 'Loading...'}
+          {/* Bottom bar: ID + Project Zone */}
+          <div className="px-4 py-2.5 bg-accent/30 border-t border-border flex-shrink-0 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Your ID</div>
+              <div className="text-xs text-primary font-mono break-all mt-0.5 cursor-pointer hover:underline" onClick={copyId}>
+                {me.readable_id || 'Loading...'}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{copied ? '✅ Copied!' : 'Click to copy'}</div>
             </div>
-            <div className="text-[10px] text-muted-foreground mt-0.5">{copied ? '✅ Copied!' : 'Click to copy'}</div>
+            <button
+              onClick={() => setTab('projects')}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${tab === 'projects' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
+              title="Project Zone"
+            >
+              <Rocket size={18} />
+              <span className="text-[9px] font-semibold uppercase tracking-wider">Projects</span>
+            </button>
           </div>
         </>
       )}

@@ -50,6 +50,36 @@ export type Database = {
           },
         ]
       }
+      disappearing_settings: {
+        Row: {
+          chat_id: string
+          chat_type: string
+          duration_seconds: number
+          enabled: boolean
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          chat_type?: string
+          duration_seconds?: number
+          enabled?: boolean
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          chat_type?: string
+          duration_seconds?: number
+          enabled?: boolean
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -397,6 +427,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      starred_messages: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          id: string
+          message_id: string
+          message_type: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          id?: string
+          message_id: string
+          message_type?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          message_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       status_views: {
         Row: {

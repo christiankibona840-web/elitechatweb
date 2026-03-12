@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { Reply, Trash2, Forward, SmilePlus } from 'lucide-react';
+import { Reply, Trash2, Forward, SmilePlus, Star } from 'lucide-react';
 
 const QUICK_EMOJIS = ['❤️', '😂', '👍', '😮', '😢', '🙏'];
 
 interface MessageActionsProps {
   isMe: boolean;
+  isStarred?: boolean;
   onReply: () => void;
   onDelete: () => void;
   onForward: () => void;
   onReact: (emoji: string) => void;
+  onStar: () => void;
 }
 
-const MessageActions = ({ isMe, onReply, onDelete, onForward, onReact }: MessageActionsProps) => {
+const MessageActions = ({ isMe, isStarred, onReply, onDelete, onForward, onReact, onStar }: MessageActionsProps) => {
   const [showEmojis, setShowEmojis] = useState(false);
 
   return (
@@ -27,6 +29,9 @@ const MessageActions = ({ isMe, onReply, onDelete, onForward, onReact }: Message
             ))}
           </div>
         )}
+      </button>
+      <button onClick={onStar} className={`p-1 rounded-full transition-colors ${isStarred ? 'text-yellow-400' : 'text-muted-foreground hover:text-foreground'}`} title={isStarred ? 'Unstar' : 'Star'}>
+        <Star size={14} className={isStarred ? 'fill-current' : ''} />
       </button>
       <button onClick={onReply} className="text-muted-foreground hover:text-foreground p-1 rounded-full" title="Reply">
         <Reply size={14} />

@@ -4,6 +4,7 @@ import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
+import AdminPortal from '@/components/AdminPortal';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
@@ -16,6 +17,7 @@ const Index = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
@@ -115,6 +117,16 @@ const Index = () => {
     await new Promise(r => setTimeout(r, 500));
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
+
+    // Check admin role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    setIsAdmin(!!roleData);
+
     setLoading(false);
 
     if (data) {
@@ -139,6 +151,7 @@ const Index = () => {
     await supabase.auth.signOut();
     setProfile(null);
     setActiveChat(null);
+    setIsAdmin(false);
   };
 
   const handleMessagesChanged = useCallback(() => {
@@ -168,6 +181,10 @@ const Index = () => {
 
   if (!session || !profile) {
     return <AuthScreen onLogin={handleLogin} />;
+  }
+
+  if (isAdmin) {
+    return <AdminPortal onLogout={handleLogout} />;
   }
 
   const showChatArea = !isMobile || activeChat;

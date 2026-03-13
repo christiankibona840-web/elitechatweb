@@ -117,6 +117,16 @@ const Index = () => {
     await new Promise(r => setTimeout(r, 500));
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
+
+    // Check admin role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    setIsAdmin(!!roleData);
+
     setLoading(false);
 
     if (data) {

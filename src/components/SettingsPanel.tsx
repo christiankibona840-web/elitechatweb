@@ -19,9 +19,9 @@ interface SettingsPanelProps {
 }
 
 const THEMES = [
-  { name: 'Default Dark', bg: '200 25% 5%', panel: '200 25% 10%', primary: '160 100% 33%', bubbleIn: '200 18% 17%', bubbleOut: '120 80% 90%', chatBg: '200 30% 5%' },
-  { name: 'Ocean Blue', bg: '220 30% 8%', panel: '220 25% 12%', primary: '210 100% 50%', bubbleIn: '220 20% 18%', bubbleOut: '200 80% 88%', chatBg: '220 30% 6%' },
-  { name: 'Purple Night', bg: '270 25% 8%', panel: '270 20% 12%', primary: '270 80% 60%', bubbleIn: '270 18% 18%', bubbleOut: '270 60% 90%', chatBg: '270 25% 6%' },
+  { name: 'Midnight', bg: '230 20% 7%', panel: '230 18% 11%', primary: '250 80% 62%', bubbleIn: '230 16% 17%', bubbleOut: '250 60% 92%', chatBg: '230 22% 6%' },
+  { name: 'Ocean', bg: '220 30% 8%', panel: '220 25% 12%', primary: '210 100% 50%', bubbleIn: '220 20% 18%', bubbleOut: '200 80% 88%', chatBg: '220 30% 6%' },
+  { name: 'Amethyst', bg: '270 25% 8%', panel: '270 20% 12%', primary: '270 80% 60%', bubbleIn: '270 18% 18%', bubbleOut: '270 60% 90%', chatBg: '270 25% 6%' },
   { name: 'Rose', bg: '340 20% 8%', panel: '340 18% 12%', primary: '340 80% 55%', bubbleIn: '340 16% 18%', bubbleOut: '340 60% 90%', chatBg: '340 20% 6%' },
   { name: 'Emerald', bg: '160 25% 5%', panel: '160 20% 10%', primary: '160 80% 40%', bubbleIn: '160 18% 16%', bubbleOut: '160 60% 88%', chatBg: '160 25% 4%' },
 ];
@@ -45,14 +45,14 @@ const RADIUS_OPTIONS = [
 const applyThemeVars = (theme: typeof THEMES[0]) => {
   const r = document.documentElement.style;
   r.setProperty('--background', theme.bg);
-  r.setProperty('--wa-panel', theme.panel);
+  r.setProperty('--app-panel', theme.panel);
   r.setProperty('--primary', theme.primary);
   r.setProperty('--ring', theme.primary);
-  r.setProperty('--wa-bubble-in', theme.bubbleIn);
-  r.setProperty('--wa-green-light', theme.bubbleOut);
-  r.setProperty('--wa-chat-bg', theme.chatBg);
+  r.setProperty('--app-bubble-in', theme.bubbleIn);
+  r.setProperty('--app-bubble-out', theme.bubbleOut);
+  r.setProperty('--app-chat-bg', theme.chatBg);
   r.setProperty('--sidebar-background', theme.panel);
-  r.setProperty('--wa-header', theme.bubbleIn);
+  r.setProperty('--app-header', theme.bubbleIn);
   r.setProperty('--card', theme.panel);
 };
 
@@ -62,9 +62,7 @@ export const applyBubbleRadius = (value: string) => {
 };
 
 export const applyWallpaper = (src: string) => {
-  // Store globally for ChatArea to pick up
   (window as any).__chatWallpaper = src;
-  // Dispatch event for live update
   window.dispatchEvent(new CustomEvent('wallpaper-change', { detail: src }));
 };
 
@@ -166,7 +164,7 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
     toast.success(src ? 'Wallpaper applied!' : 'Wallpaper removed!');
   };
 
-  const inputClass = "bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full";
+  const inputClass = "bg-app-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full";
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -192,7 +190,7 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
           <input className={inputClass} placeholder="Display name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
           <input className={inputClass} placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
           <textarea className={`${inputClass} resize-none`} placeholder="Bio" rows={2} value={bio} onChange={e => setBio(e.target.value)} />
-          <button onClick={updateProfile} disabled={saving} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-wa-green-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={updateProfile} disabled={saving} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-app-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
             <Save size={14} /> {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -207,7 +205,7 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
           <div className="flex flex-col gap-2.5 mt-3">
             <input className={inputClass} type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
             <input className={inputClass} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-            <button onClick={changePassword} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-wa-green-dark transition-colors">
+            <button onClick={changePassword} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-app-primary-dark transition-colors">
               Update Password
             </button>
           </div>
@@ -263,7 +261,7 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
               {wp.src ? (
                 <img src={wp.thumb} alt={wp.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-wa-chat-bg flex items-center justify-center">
+                <div className="w-full h-full bg-app-chat-bg flex items-center justify-center">
                   <span className="text-[10px] text-muted-foreground">None</span>
                 </div>
               )}

@@ -37,12 +37,9 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
       .select('*, profiles!statuses_user_id_fkey(id, display_name)')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: true });
-
     if (!data) return;
-
     const mine = data.filter(s => s.user_id === me.id);
     setMyStatuses(mine);
-
     const othersMap = new Map<string, StatusGroup>();
     for (const s of data) {
       if (s.user_id === me.id) continue;
@@ -58,10 +55,8 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
   const postStatus = async () => {
     if (!text.trim() && !file) return;
     setPosting(true);
-
     let mediaUrl: string | null = null;
     let mediaType: string | null = null;
-
     if (file) {
       const path = `statuses/${me.id}/${Date.now()}.${file.name.split('.').pop()}`;
       const { error } = await supabase.storage.from('chat-files').upload(path, file);
@@ -71,18 +66,8 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
         mediaType = file.type;
       }
     }
-
-    await supabase.from('statuses').insert({
-      user_id: me.id,
-      content: text.trim() || null,
-      media_url: mediaUrl,
-      media_type: mediaType,
-    });
-
-    setText('');
-    setFile(null);
-    setShowAdd(false);
-    setPosting(false);
+    await supabase.from('statuses').insert({ user_id: me.id, content: text.trim() || null, media_url: mediaUrl, media_type: mediaType });
+    setText(''); setFile(null); setShowAdd(false); setPosting(false);
     toast.success('Status posted!');
     loadStatuses();
   };
@@ -97,10 +82,7 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
     setViewing(group);
     setViewIdx(0);
     for (const s of group.statuses) {
-      await supabase.from('status_views').upsert({
-        status_id: s.id,
-        viewer_id: me.id,
-      }, { onConflict: 'status_id,viewer_id' });
+      await supabase.from('status_views').upsert({ status_id: s.id, viewer_id: me.id }, { onConflict: 'status_id,viewer_id' });
     }
   };
 
@@ -115,12 +97,11 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* My status */}
       <div className="px-4 py-3">
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-3 w-full text-left">
           <div className="relative">
             <Avatar name={me.display_name} size={50} avatarUrl={me.avatar_url} />
-            <div className="absolute bottom-0 right-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-wa-panel">
+            <div className="absolute bottom-0 right-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-app-panel">
               <Plus size={12} className="text-primary-foreground" />
             </div>
           </div>
@@ -133,7 +114,6 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
         </button>
       </div>
 
-      {/* My statuses list with delete & viewers */}
       {myStatuses.length > 0 && (
         <div className="px-4 pb-3">
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Your statuses</div>
@@ -141,12 +121,8 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
             <div key={s.id} className="flex items-center justify-between py-1.5">
               <div className="text-xs text-foreground truncate flex-1">{s.content || '📷 Media'}</div>
               <div className="flex items-center gap-1">
-                <button onClick={() => loadViewers(s.id)} className="text-wa-icon hover:text-primary p-1" title="View viewers">
-                  <Eye size={14} />
-                </button>
-                <button onClick={() => deleteStatus(s.id)} className="text-wa-icon hover:text-destructive p-1" title="Delete">
-                  <Trash2 size={14} />
-                </button>
+                <button onClick={() => loadViewers(s.id)} className="text-app-icon hover:text-primary p-1" title="View viewers"><Eye size={14} /></button>
+                <button onClick={() => deleteStatus(s.id)} className="text-app-icon hover:text-destructive p-1" title="Delete"><Trash2 size={14} /></button>
               </div>
             </div>
           ))}
@@ -157,7 +133,7 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
         <div className="px-4 py-2">
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Recent updates</div>
           {groups.map(g => (
-            <button key={g.user.id} onClick={() => viewStatus(g)} className="flex items-center gap-3 py-2.5 w-full text-left hover:bg-wa-input-bg rounded-lg px-2 transition-colors">
+            <button key={g.user.id} onClick={() => viewStatus(g)} className="flex items-center gap-3 py-2.5 w-full text-left hover:bg-app-input-bg rounded-lg px-2 transition-colors">
               <div className="ring-2 ring-primary rounded-full p-0.5">
                 <Avatar name={g.user.display_name} size={44} />
               </div>
@@ -171,29 +147,26 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
       )}
 
       {groups.length === 0 && myStatuses.length === 0 && (
-        <div className="text-center py-10 text-muted-foreground text-sm">
-          No recent status updates
-        </div>
+        <div className="text-center py-10 text-muted-foreground text-sm">No recent status updates</div>
       )}
 
-      {/* Add status modal */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={e => { if (e.target === e.currentTarget) setShowAdd(false); }}>
           <div className="bg-popover border border-border rounded-2xl w-[360px] max-w-[90vw] shadow-2xl">
             <div className="flex items-center justify-between p-5 pb-3.5 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground">📸 Add Status</h3>
-              <button onClick={() => setShowAdd(false)} className="text-wa-icon hover:text-foreground"><X size={18} /></button>
+              <button onClick={() => setShowAdd(false)} className="text-app-icon hover:text-foreground"><X size={18} /></button>
             </div>
             <div className="p-5 flex flex-col gap-3">
-              <textarea className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full resize-none" placeholder="Write your status..." rows={3} value={text} onChange={e => setText(e.target.value)} autoFocus />
+              <textarea className="bg-app-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full resize-none" placeholder="Write your status..." rows={3} value={text} onChange={e => setText(e.target.value)} autoFocus />
               <input type="file" ref={fileRef} className="hidden" accept="image/*,video/*" onChange={e => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
               <button onClick={() => fileRef.current?.click()} className="flex items-center gap-2 text-sm text-primary hover:underline">
                 <ImageIcon size={16} /> {file ? file.name : 'Add photo/video'}
               </button>
             </div>
             <div className="flex gap-2.5 justify-end p-5 pt-3.5 border-t border-border">
-              <button onClick={() => setShowAdd(false)} className="bg-wa-input-bg text-foreground rounded-lg px-4 py-2 text-sm">Cancel</button>
-              <button onClick={postStatus} disabled={posting || (!text.trim() && !file)} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-wa-green-dark transition-colors disabled:opacity-50">
+              <button onClick={() => setShowAdd(false)} className="bg-app-input-bg text-foreground rounded-lg px-4 py-2 text-sm">Cancel</button>
+              <button onClick={postStatus} disabled={posting || (!text.trim() && !file)} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-app-primary-dark transition-colors disabled:opacity-50">
                 {posting ? 'Posting...' : 'Post'}
               </button>
             </div>
@@ -201,7 +174,6 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
         </div>
       )}
 
-      {/* View status */}
       {viewing && (
         <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
           <div className="absolute top-4 right-4">
@@ -225,13 +197,12 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
         </div>
       )}
 
-      {/* Status viewers modal */}
       {showViewers && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={e => { if (e.target === e.currentTarget) setShowViewers(false); }}>
           <div className="bg-popover border border-border rounded-2xl w-[340px] max-w-[90vw] shadow-2xl max-h-[60vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground">👁 Viewed by ({viewers.length})</h3>
-              <button onClick={() => setShowViewers(false)} className="text-wa-icon hover:text-foreground"><X size={18} /></button>
+              <button onClick={() => setShowViewers(false)} className="text-app-icon hover:text-foreground"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {viewers.length === 0 ? (

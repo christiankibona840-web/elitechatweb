@@ -85,42 +85,25 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
   const createProject = async () => {
     if (!title.trim()) { toast.error('Enter a project title'); return; }
     setCreating(true);
-
     let mediaUrl: string | null = null;
     let mediaType: string | null = null;
     let fileName: string | null = null;
-
     if (file) {
       mediaType = getMediaType(file);
       fileName = file.name;
       const path = `projects/${me.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage.from('chat-files').upload(path, file);
-      if (uploadError) {
-        toast.error('Failed to upload file');
-        setCreating(false);
-        return;
-      }
+      if (uploadError) { toast.error('Failed to upload file'); setCreating(false); return; }
       const { data: urlData } = supabase.storage.from('chat-files').getPublicUrl(path);
       mediaUrl = urlData.publicUrl;
     }
-
     const { error } = await supabase.from('projects').insert({
-      user_id: me.id,
-      title: title.trim(),
-      description: description.trim() || null,
-      media_url: mediaUrl,
-      media_type: mediaType,
-      file_name: fileName,
+      user_id: me.id, title: title.trim(), description: description.trim() || null,
+      media_url: mediaUrl, media_type: mediaType, file_name: fileName,
     });
-
-    if (error) {
-      toast.error('Failed to create project');
-    } else {
+    if (error) { toast.error('Failed to create project'); } else {
       toast.success('Project posted!');
-      setTitle('');
-      setDescription('');
-      setFile(null);
-      setShowCreate(false);
+      setTitle(''); setDescription(''); setFile(null); setShowCreate(false);
       loadProjects();
     }
     setCreating(false);
@@ -136,13 +119,9 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
     if (!commentText.trim()) return;
     setSendingComment(true);
     const { error } = await supabase.from('project_comments').insert({
-      project_id: projectId,
-      user_id: me.id,
-      content: commentText.trim(),
+      project_id: projectId, user_id: me.id, content: commentText.trim(),
     });
-    if (error) {
-      toast.error('Failed to send comment');
-    } else {
+    if (error) { toast.error('Failed to send comment'); } else {
       setCommentText('');
       loadComments(projectId);
     }
@@ -156,7 +135,6 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-sm font-semibold text-foreground">🚀 Project Zone</h3>
         <button onClick={() => setShowCreate(!showCreate)} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/80 transition-colors">
@@ -164,26 +142,20 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
         </button>
       </div>
 
-      {/* Create form */}
       {showCreate && (
         <div className="p-4 border-b border-border bg-accent/20">
           <input
-            className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3 py-2 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full mb-2"
-            placeholder="Project title"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
+            className="bg-app-input-bg text-foreground border border-transparent rounded-lg px-3 py-2 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full mb-2"
+            placeholder="Project title" value={title} onChange={e => setTitle(e.target.value)}
           />
           <textarea
-            className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3 py-2 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full mb-2 resize-none"
-            placeholder="Description (optional)"
-            rows={2}
-            value={description}
-            onChange={e => setDescription(e.target.value)}
+            className="bg-app-input-bg text-foreground border border-transparent rounded-lg px-3 py-2 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full mb-2 resize-none"
+            placeholder="Description (optional)" rows={2} value={description} onChange={e => setDescription(e.target.value)}
           />
           <div className="flex items-center gap-2 mb-3">
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
               <input type="file" className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt" onChange={e => setFile(e.target.files?.[0] || null)} />
-              <Plus size={14} /> {file ? file.name : 'Attach file (image, video, audio, text)'}
+              <Plus size={14} /> {file ? file.name : 'Attach file'}
             </label>
             {file && <button onClick={() => setFile(null)} className="text-destructive text-xs">Remove</button>}
           </div>
@@ -193,7 +165,6 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
         </div>
       )}
 
-      {/* Projects list */}
       {loading ? (
         <div className="text-center text-muted-foreground text-sm py-10">Loading projects...</div>
       ) : projects.length === 0 ? (
@@ -205,7 +176,6 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
         projects.map(p => (
           <div key={p.id} className="border-b border-border">
             <div className="px-4 py-3">
-              {/* Author */}
               <div className="flex items-center gap-2 mb-2">
                 <Avatar name={p.profiles?.display_name || '?'} size={32} avatarUrl={p.profiles?.avatar_url} />
                 <div className="flex-1 min-w-0">
@@ -213,41 +183,23 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
                   <span className="text-[10px] text-muted-foreground ml-2">{fmtDate(p.created_at)}</span>
                 </div>
                 {p.user_id === me.id && (
-                  <button onClick={() => deleteProject(p.id)} className="text-destructive/60 hover:text-destructive transition-colors">
-                    <Trash2 size={14} />
-                  </button>
+                  <button onClick={() => deleteProject(p.id)} className="text-destructive/60 hover:text-destructive transition-colors"><Trash2 size={14} /></button>
                 )}
               </div>
-
-              {/* Content */}
               <h4 className="text-sm font-semibold text-foreground mb-1">{p.title}</h4>
               {p.description && <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{p.description}</p>}
-
-              {/* Media */}
-              {p.media_url && p.media_type === 'image' && (
-                <img src={p.media_url} alt={p.title} className="rounded-lg max-h-48 object-cover w-full mb-2" />
-              )}
-              {p.media_url && p.media_type === 'video' && (
-                <video src={p.media_url} controls className="rounded-lg max-h-48 w-full mb-2" />
-              )}
-              {p.media_url && p.media_type === 'audio' && (
-                <audio src={p.media_url} controls className="w-full mb-2" />
-              )}
+              {p.media_url && p.media_type === 'image' && <img src={p.media_url} alt={p.title} className="rounded-lg max-h-48 object-cover w-full mb-2" />}
+              {p.media_url && p.media_type === 'video' && <video src={p.media_url} controls className="rounded-lg max-h-48 w-full mb-2" />}
+              {p.media_url && p.media_type === 'audio' && <audio src={p.media_url} controls className="w-full mb-2" />}
               {p.media_url && p.media_type !== 'image' && p.media_type !== 'video' && p.media_type !== 'audio' && (
-                <a href={p.media_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline mb-2 block">
-                  📎 {p.file_name || 'Download file'}
-                </a>
+                <a href={p.media_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline mb-2 block">📎 {p.file_name || 'Download file'}</a>
               )}
-
-              {/* Comment toggle */}
               <button onClick={() => toggleComments(p.id)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1">
                 <MessageSquare size={13} />
                 {expandedProject === p.id ? 'Hide comments' : 'Comments'}
                 {comments[p.id] && comments[p.id].length > 0 && ` (${comments[p.id].length})`}
               </button>
             </div>
-
-            {/* Comments section */}
             {expandedProject === p.id && (
               <div className="bg-accent/10 px-4 py-2 border-t border-border/50">
                 {(comments[p.id] || []).map(c => (
@@ -262,7 +214,7 @@ const ProjectZone = ({ me }: ProjectZoneProps) => {
                 ))}
                 <div className="flex gap-2 mt-2 mb-1">
                   <input
-                    className="flex-1 bg-wa-input-bg text-foreground border border-transparent rounded-full px-3 py-1.5 text-xs focus:border-primary outline-none placeholder:text-muted-foreground"
+                    className="flex-1 bg-app-input-bg text-foreground border border-transparent rounded-full px-3 py-1.5 text-xs focus:border-primary outline-none placeholder:text-muted-foreground"
                     placeholder="Write a comment..."
                     value={commentText}
                     onChange={e => setCommentText(e.target.value)}

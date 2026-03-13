@@ -52,16 +52,13 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [reactions, setReactions] = useState<Record<string, { emoji: string; user_id: string }[]>>({});
   const [forwardMsg, setForwardMsg] = useState<any>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
-  // Search state
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [searchIdx, setSearchIdx] = useState(0);
-  // Panel states
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [showStarred, setShowStarred] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
-  // Disappearing messages
   const [disappearSetting, setDisappearSetting] = useState(0);
   const [showDisappearPicker, setShowDisappearPicker] = useState(false);
 
@@ -70,7 +67,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Listen for wallpaper changes
   useEffect(() => {
     const handler = (e: Event) => setWallpaper((e as CustomEvent).detail || '');
     window.addEventListener('wallpaper-change', handler);
@@ -79,7 +75,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
   useEffect(() => {
     if (!activeChat) return;
-    // Reset panel states
     setShowSearch(false);
     setSearchQuery('');
     setShowMediaGallery(false);
@@ -148,7 +143,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     }
   }, [activeChat?.type, activeChat?.id]);
 
-  // Load starred message IDs
   useEffect(() => {
     if (!activeChat) return;
     supabase
@@ -161,7 +155,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       });
   }, [activeChat?.id, me.id]);
 
-  // Load disappearing setting
   useEffect(() => {
     if (!activeChat) return;
     supabase
@@ -175,7 +168,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       });
   }, [activeChat?.id, me.id]);
 
-  // Load reactions
   useEffect(() => {
     if (messages.length === 0) return;
     const msgIds = messages.map(m => m.id);
@@ -190,7 +182,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     });
   }, [messages]);
 
-  // Realtime reactions
   useEffect(() => {
     const ch = supabase
       .channel('reactions-realtime')
@@ -216,7 +207,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Disappearing messages cleanup
   useEffect(() => {
     if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;
     const now = Date.now();
@@ -360,7 +350,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     }
   };
 
-  // Search functionality
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) { setSearchResults([]); setSearchIdx(0); return; }
@@ -382,7 +371,6 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     document.getElementById(`msg-${searchResults[newIdx]}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // Disappearing messages toggle
   const setDisappearing = async (seconds: number) => {
     if (!activeChat) return;
     if (seconds === 0) {
@@ -405,9 +393,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
   if (!activeChat) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center wa-pattern-bg text-center">
-        <div className="text-7xl mb-5">💬</div>
-        <h2 className="text-2xl font-light text-foreground mb-3">Web Chaty YST</h2>
+      <div className="flex-1 flex flex-col items-center justify-center app-pattern-bg text-center">
+        <div className="text-7xl mb-5">⚡</div>
+        <h2 className="text-2xl font-light text-foreground mb-3">EliteChat</h2>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px]">
           Select a conversation or search for users to start chatting.
         </p>
@@ -479,11 +467,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0 relative">
-      {/* Media Gallery panel */}
       {showMediaGallery && (
         <MediaGallery chatId={activeChat.id} chatType={activeChat.type} myId={me.id} onClose={() => setShowMediaGallery(false)} />
       )}
-      {/* Starred Messages panel */}
       {showStarred && (
         <StarredMessages myId={me.id} chatId={activeChat.id} chatType={activeChat.type}
           onClose={() => setShowStarred(false)}
@@ -492,17 +478,17 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-wa-header border-b border-border flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-app-header border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
           {onBack && (
-            <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors mr-1">
+            <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors mr-1">
               <ArrowLeft size={20} />
             </button>
           )}
           <Avatar name={chatName} size={42} avatarUrl={activeChat.type === 'dm' ? contactProfile?.avatar_url : groupInfo?.avatar_url} />
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
-            <div className={`text-xs ${contactProfile?.is_online ? 'text-wa-online' : 'text-muted-foreground'}`}>
+            <div className={`text-xs ${contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
               {isTyping ? 'typing...' : subtitle}
               {disappearSetting > 0 && <span className="ml-1.5">⏱</span>}
             </div>
@@ -511,12 +497,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
         <div className="flex items-center gap-0.5">
           <button onClick={() => { setShowSearch(!showSearch); setTimeout(() => searchInputRef.current?.focus(), 100); }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Search messages">
+            className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="Search messages">
             <Search size={18} />
           </button>
           <div className="relative">
             <button onClick={() => setShowHeaderMenu(!showHeaderMenu)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="More">
+              className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="More">
               <ChevronDown size={18} />
             </button>
             {showHeaderMenu && (
@@ -542,8 +528,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
       {/* Search bar */}
       {showSearch && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-wa-header border-b border-border flex-shrink-0">
-          <div className="flex-1 flex items-center gap-2 bg-wa-input-bg rounded-3xl px-3.5 py-1.5">
+        <div className="flex items-center gap-2 px-4 py-2 bg-app-header border-b border-border flex-shrink-0">
+          <div className="flex-1 flex items-center gap-2 bg-app-input-bg rounded-3xl px-3.5 py-1.5">
             <Search size={14} className="text-muted-foreground" />
             <input
               ref={searchInputRef}
@@ -556,11 +542,11 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           {searchResults.length > 0 && (
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">{searchIdx + 1}/{searchResults.length}</span>
-              <button onClick={() => navigateSearch(-1)} className="text-wa-icon hover:text-foreground p-1">▲</button>
-              <button onClick={() => navigateSearch(1)} className="text-wa-icon hover:text-foreground p-1">▼</button>
+              <button onClick={() => navigateSearch(-1)} className="text-app-icon hover:text-foreground p-1">▲</button>
+              <button onClick={() => navigateSearch(1)} className="text-app-icon hover:text-foreground p-1">▼</button>
             </div>
           )}
-          <button onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }} className="text-wa-icon hover:text-foreground">
+          <button onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }} className="text-app-icon hover:text-foreground">
             <X size={18} />
           </button>
         </div>
@@ -568,7 +554,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
       {/* Disappearing messages picker */}
       {showDisappearPicker && (
-        <div className="px-4 py-3 bg-wa-header border-b border-border flex-shrink-0">
+        <div className="px-4 py-3 bg-app-header border-b border-border flex-shrink-0">
           <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Timer size={13} /> Disappearing messages</div>
           <div className="flex gap-2">
             {DISAPPEAR_OPTIONS.map(opt => (
@@ -582,7 +568,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       )}
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto px-[10%] py-3 ${!wallpaper ? 'wa-pattern-bg' : ''}`} style={chatBgStyle}>
+      <div className={`flex-1 overflow-y-auto px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
         {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}
         {messages.length === 0 && (
           <div className="text-center mt-10 text-muted-foreground text-sm">No messages yet — say hello! 👋</div>
@@ -616,7 +602,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                     onReact={(emoji) => toggleReaction(msg.id, emoji)} onStar={() => toggleStar(msg.id)} />
                 )}
                 <div className={`max-w-[65%] px-3 py-1.5 text-sm leading-relaxed break-words shadow-sm relative ${
-                  isMe ? 'bg-wa-green-light text-[hsl(var(--wa-bubble-out-text))]' : 'bg-wa-bubble-in text-foreground'
+                  isMe ? 'bg-app-bubble-out text-[hsl(var(--app-bubble-out-text))]' : 'bg-app-bubble-in text-foreground'
                 } ${highlighted ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''}`}
                   style={{ borderRadius: `var(--bubble-radius)`, ...(isMe ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }) }}>
                   {isDeleted ? (
@@ -658,23 +644,23 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
       {/* File preview */}
       {file && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-wa-header border-t border-border">
-          <div className="flex items-center gap-2 bg-wa-input-bg rounded-lg px-3 py-2 flex-1">
+        <div className="flex items-center gap-2 px-4 py-2 bg-app-header border-t border-border">
+          <div className="flex items-center gap-2 bg-app-input-bg rounded-lg px-3 py-2 flex-1">
             {file.type.startsWith('image/') ? <ImageIcon size={16} /> : <FileText size={16} />}
             <span className="text-xs text-foreground truncate">{file.name}</span>
           </div>
-          <button onClick={() => setFile(null)} className="text-wa-icon hover:text-destructive"><X size={18} /></button>
+          <button onClick={() => setFile(null)} className="text-app-icon hover:text-destructive"><X size={18} /></button>
         </div>
       )}
 
       {/* Reply preview */}
       {replyTo && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-wa-header border-t border-border">
+        <div className="flex items-center gap-2 px-4 py-2 bg-app-header border-t border-border">
           <div className="flex-1 border-l-2 border-primary bg-primary/10 rounded px-3 py-2">
             <div className="text-xs font-semibold text-primary">{replyTo.sender_name}</div>
             <div className="text-xs text-muted-foreground truncate">{replyTo.content || '📎 Attachment'}</div>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-wa-icon hover:text-destructive"><X size={18} /></button>
+          <button onClick={() => setReplyTo(null)} className="text-app-icon hover:text-destructive"><X size={18} /></button>
         </div>
       )}
 
@@ -682,12 +668,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       {showRecorder && <VoiceRecorder onSend={(blob) => sendMessage(blob)} onCancel={() => setShowRecorder(false)} />}
 
       {/* Input bar */}
-      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-wa-header flex-shrink-0">
+      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-app-header flex-shrink-0">
         <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
-        <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors flex-shrink-0" title="Attach file">
+        <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors flex-shrink-0" title="Attach file">
           <Paperclip size={20} />
         </button>
-        <div className="flex-1 bg-wa-input-bg rounded-3xl px-4 py-2">
+        <div className="flex-1 bg-app-input-bg rounded-3xl px-4 py-2">
           <input
             className="w-full bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground"
             placeholder="Type a message…"
@@ -698,21 +684,18 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         </div>
         {!input.trim() && !file ? (
           <button onClick={() => setShowRecorder(true)}
-            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-wa-green-dark transition-colors" title="Voice note">
+            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-app-primary-dark transition-colors" title="Voice note">
             <Mic size={18} />
           </button>
         ) : (
           <button onClick={() => sendMessage()} disabled={uploading}
-            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-wa-green-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 hover:bg-app-primary-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             <Send size={18} className="ml-0.5" />
           </button>
         )}
       </div>
 
-      {/* Forward modal */}
       {forwardMsg && <ForwardModal me={me} message={forwardMsg} onClose={() => setForwardMsg(null)} onForwarded={onMessagesChanged} />}
-
-      {/* Close header menu on click outside */}
       {showHeaderMenu && <div className="fixed inset-0 z-20" onClick={() => setShowHeaderMenu(false)} />}
     </div>
   );

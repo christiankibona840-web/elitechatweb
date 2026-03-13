@@ -183,6 +183,10 @@ const Index = () => {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
+  if (isAdmin) {
+    return <AdminPortal onLogout={handleLogout} />;
+  }
+
   const showChatArea = !isMobile || activeChat;
   const showSidebar = !isMobile || !activeChat;
 

@@ -21,27 +21,20 @@ const MediaGallery = ({ chatId, chatType, myId, onClose }: MediaGalleryProps) =>
   const [items, setItems] = useState<MediaItem[]>([]);
   const [tab, setTab] = useState<'media' | 'docs'>('media');
 
-  useEffect(() => {
-    loadMedia();
-  }, [chatId, chatType]);
+  useEffect(() => { loadMedia(); }, [chatId, chatType]);
 
   const loadMedia = async () => {
     let data: any[] = [];
     if (chatType === 'dm') {
       const { data: msgs } = await supabase
-        .from('messages')
-        .select('id, file_url, file_name, file_type, created_at')
+        .from('messages').select('id, file_url, file_name, file_type, created_at')
         .or(`and(sender_id.eq.${myId},receiver_id.eq.${chatId}),and(sender_id.eq.${chatId},receiver_id.eq.${myId})`)
-        .not('file_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .not('file_url', 'is', null).order('created_at', { ascending: false });
       data = msgs || [];
     } else {
       const { data: msgs } = await supabase
-        .from('group_messages')
-        .select('id, file_url, file_name, file_type, created_at')
-        .eq('group_id', chatId)
-        .not('file_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .from('group_messages').select('id, file_url, file_name, file_type, created_at')
+        .eq('group_id', chatId).not('file_url', 'is', null).order('created_at', { ascending: false });
       data = msgs || [];
     }
     setItems(data);
@@ -60,13 +53,12 @@ const MediaGallery = ({ chatId, chatType, myId, onClose }: MediaGalleryProps) =>
 
   return (
     <div className="absolute inset-0 z-20 bg-background flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-wa-header border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 bg-app-header border-b border-border">
         <div className="flex items-center gap-2">
-          <button onClick={onClose} className="text-wa-icon hover:text-foreground"><X size={20} /></button>
+          <button onClick={onClose} className="text-app-icon hover:text-foreground"><X size={20} /></button>
           <span className="text-sm font-medium text-foreground">Media, Links & Docs</span>
         </div>
       </div>
-
       <div className="flex border-b border-border">
         <button onClick={() => setTab('media')} className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${tab === 'media' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
           Media ({mediaItems.length})
@@ -75,7 +67,6 @@ const MediaGallery = ({ chatId, chatType, myId, onClose }: MediaGalleryProps) =>
           Docs ({docItems.length})
         </button>
       </div>
-
       <div className="flex-1 overflow-y-auto p-3">
         {shown.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground text-sm">No {tab} shared yet</div>
@@ -88,9 +79,7 @@ const MediaGallery = ({ chatId, chatType, myId, onClose }: MediaGalleryProps) =>
                 ) : item.file_type?.startsWith('video/') ? (
                   <video src={item.file_url} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Music size={28} className="text-muted-foreground" />
-                  </div>
+                  <div className="w-full h-full flex items-center justify-center"><Music size={28} className="text-muted-foreground" /></div>
                 )}
               </a>
             ))}

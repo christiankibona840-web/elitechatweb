@@ -4,58 +4,58 @@
 
 @layer base {
   :root {
-    --background: 200 25% 5%;
-    --foreground: 200 20% 92%;
+    --background: 230 20% 7%;
+    --foreground: 220 15% 93%;
 
-    --card: 200 20% 10%;
-    --card-foreground: 200 20% 92%;
+    --card: 230 18% 11%;
+    --card-foreground: 220 15% 93%;
 
-    --popover: 200 18% 14%;
-    --popover-foreground: 200 20% 92%;
+    --popover: 230 16% 14%;
+    --popover-foreground: 220 15% 93%;
 
-    --primary: 160 100% 33%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 250 80% 62%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 18% 14%;
-    --secondary-foreground: 200 20% 92%;
+    --secondary: 230 16% 14%;
+    --secondary-foreground: 220 15% 93%;
 
-    --muted: 200 14% 18%;
-    --muted-foreground: 200 14% 56%;
+    --muted: 230 12% 18%;
+    --muted-foreground: 230 12% 56%;
 
-    --accent: 200 14% 18%;
-    --accent-foreground: 200 20% 92%;
+    --accent: 230 12% 18%;
+    --accent-foreground: 220 15% 93%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 12% 24%;
-    --input: 200 16% 22%;
-    --ring: 160 100% 33%;
+    --border: 230 10% 22%;
+    --input: 230 14% 20%;
+    --ring: 250 80% 62%;
 
     --radius: 0.5rem;
     --bubble-radius: 12px;
 
-    /* WhatsApp specific tokens */
-    --wa-green: 160 100% 33%;
-    --wa-green-dark: 160 100% 25%;
-    --wa-green-light: 120 80% 90%;
-    --wa-panel: 200 25% 10%;
-    --wa-chat-bg: 200 30% 5%;
-    --wa-bubble-in: 200 18% 17%;
-    --wa-header: 200 18% 17%;
-    --wa-input-bg: 200 18% 24%;
-    --wa-online: 145 100% 39%;
-    --wa-icon: 200 14% 72%;
-    --wa-bubble-out-text: 200 25% 10%;
+    /* App design tokens */
+    --app-primary: 250 80% 62%;
+    --app-primary-dark: 250 80% 50%;
+    --app-bubble-out: 250 60% 92%;
+    --app-panel: 230 18% 11%;
+    --app-chat-bg: 230 22% 6%;
+    --app-bubble-in: 230 16% 17%;
+    --app-header: 230 16% 14%;
+    --app-input-bg: 230 14% 22%;
+    --app-online: 145 100% 39%;
+    --app-icon: 230 12% 68%;
+    --app-bubble-out-text: 230 25% 12%;
 
-    --sidebar-background: 200 25% 10%;
-    --sidebar-foreground: 200 20% 92%;
-    --sidebar-primary: 160 100% 33%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 200 14% 18%;
-    --sidebar-accent-foreground: 200 20% 92%;
-    --sidebar-border: 200 12% 24%;
-    --sidebar-ring: 160 100% 33%;
+    --sidebar-background: 230 18% 11%;
+    --sidebar-foreground: 220 15% 93%;
+    --sidebar-primary: 250 80% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 230 12% 18%;
+    --sidebar-accent-foreground: 220 15% 93%;
+    --sidebar-border: 230 10% 22%;
+    --sidebar-ring: 250 80% 62%;
   }
 }
 
@@ -73,15 +73,15 @@
     width: 4px;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(200 12% 28%);
+    background: hsl(230 10% 26%);
     border-radius: 2px;
   }
 }
 
 @layer utilities {
-  .wa-pattern-bg {
-    background-color: hsl(var(--wa-chat-bg));
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  .app-pattern-bg {
+    background-color: hsl(var(--app-chat-bg));
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a1d2e' fill-opacity='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 }
 

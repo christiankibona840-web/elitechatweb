@@ -140,24 +140,24 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
     activeChat?.type === item.type && activeChat?.id === item.id;
 
   return (
-    <div className="w-full md:w-80 flex-shrink-0 border-r border-border bg-wa-panel flex flex-col h-screen">
+    <div className="w-full md:w-80 flex-shrink-0 border-r border-border bg-app-panel flex flex-col h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-wa-header flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-app-header flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <Avatar name={me.display_name} size={40} avatarUrl={me.avatar_url} />
           <div>
             <div className="text-sm font-medium text-foreground">{me.display_name}</div>
-            <div className="text-xs text-wa-online">● Online</div>
+            <div className="text-xs text-app-online">● Online</div>
           </div>
         </div>
         <div className="flex gap-0.5">
-          <button onClick={() => setShowCreateGroup(true)} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Create group">
+          <button onClick={() => setShowCreateGroup(true)} className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="Create group">
             <Users size={20} />
           </button>
-          <button onClick={() => setShowSearch(true)} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Find users">
+          <button onClick={() => setShowSearch(true)} className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="Find users">
             <UserPlus size={20} />
           </button>
-          <button onClick={onLogout} className="w-9 h-9 rounded-full flex items-center justify-center text-wa-icon hover:bg-muted/30 transition-colors" title="Sign out">
+          <button onClick={onLogout} className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="Sign out">
             <LogOut size={20} />
           </button>
         </div>
@@ -191,7 +191,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
         <>
           {/* Search */}
           <div className="px-3 py-2 flex-shrink-0">
-            <div className="flex items-center gap-2 bg-wa-input-bg rounded-3xl px-3.5 py-1.5">
+            <div className="flex items-center gap-2 bg-app-input-bg rounded-3xl px-3.5 py-1.5">
               <Search size={15} className="text-muted-foreground" />
               <input className="bg-transparent text-foreground text-sm flex-1 outline-none placeholder:text-muted-foreground" placeholder="Search conversations" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
@@ -211,7 +211,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
                 <button
                   key={`${item.type}-${item.id}`}
                   onClick={() => onSelectChat({ type: item.type, id: item.id })}
-                  className={`flex items-center gap-3 px-4 py-2.5 w-full text-left transition-colors hover:bg-wa-input-bg ${isActive(item) ? 'bg-wa-input-bg' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-2.5 w-full text-left transition-colors hover:bg-app-input-bg ${isActive(item) ? 'bg-app-input-bg' : ''}`}
                 >
                   <Avatar name={item.name} size={50} />
                   <div className="flex-1 min-w-0 border-b border-border pb-2.5">

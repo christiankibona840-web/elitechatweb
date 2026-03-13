@@ -62,7 +62,6 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
   const handleContactClick = (contact: { readableId: string; name: string }) => {
     setTargetContact(contact);
     setHoveredContact(null);
-    // Scroll up to the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -70,18 +69,18 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
     if (e.key === 'Enter') submit();
   };
 
-  const inputClass = "bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none";
+  const inputClass = "bg-app-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-3 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-60 bg-primary z-0" />
+      <div className="absolute top-0 left-0 right-0 h-60 bg-gradient-to-br from-primary to-primary/60 z-0" />
 
-      <div className="relative z-10 bg-wa-panel rounded-2xl p-8 w-[360px] shadow-2xl" onKeyDown={handleKeyDown}>
+      <div className="relative z-10 bg-app-panel rounded-2xl p-8 w-[360px] shadow-2xl" onKeyDown={handleKeyDown}>
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg shadow-primary/40">
-            💬
+          <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg shadow-primary/40">
+            ⚡
           </div>
-          <h1 className="text-xl font-normal text-foreground">Web Chaty YST</h1>
+          <h1 className="text-xl font-semibold text-foreground">EliteChat</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {targetContact
               ? `Sign in to chat with ${targetContact.name}`
@@ -137,19 +136,18 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
           <button
             onClick={() => submit()}
             disabled={loading}
-            className="bg-primary text-primary-foreground rounded-lg py-3 text-sm font-semibold mt-1 hover:bg-wa-green-dark transition-colors disabled:opacity-50"
+            className="bg-primary text-primary-foreground rounded-lg py-3 text-sm font-semibold mt-1 hover:bg-app-primary-dark transition-colors disabled:opacity-50"
           >
             {loading ? 'Please wait...' : mode === 'register' ? 'Create Account' : 'Sign In'}
           </button>
         </div>
 
         <div className="text-center text-muted-foreground text-xs mt-5 flex items-center justify-center gap-1">
-          🔒 Your conversations are secured by Lovable Cloud
+          🔒 End-to-end encrypted messaging
         </div>
 
         {/* Contact buttons */}
         <div className="flex justify-between mt-6 px-2">
-          {/* Designer button - left */}
           <div className="relative"
             onMouseEnter={() => setHoveredContact('designer')}
             onMouseLeave={() => setHoveredContact(null)}
@@ -177,7 +175,6 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
             )}
           </div>
 
-          {/* Developer button - right */}
           <div className="relative"
             onMouseEnter={() => setHoveredContact('developer')}
             onMouseLeave={() => setHoveredContact(null)}

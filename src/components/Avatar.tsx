@@ -1,6 +1,5 @@
 import React from 'react';
 import { avatarColor } from '@/lib/chatStore';
-// forwardRef avatar component
 
 interface AvatarProps {
   name: string;
@@ -29,7 +28,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(({ name, size = 40,
         </div>
       )}
       {online && (
-        <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-wa-online border-2 border-wa-panel rounded-full" />
+        <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-app-online border-2 border-app-panel rounded-full" />
       )}
     </div>
   );

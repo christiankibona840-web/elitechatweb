@@ -25,36 +25,16 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
-      // First get contact IDs
       const { data: contactRows, error: contactError } = await supabase
-        .from('contacts')
-        .select('contact_id')
-        .eq('user_id', me.id);
-
+        .from('contacts').select('contact_id').eq('user_id', me.id);
       if (contactError || !contactRows || contactRows.length === 0) {
-        setContacts([]);
-        setLoadingContacts(false);
-        return;
+        setContacts([]); setLoadingContacts(false); return;
       }
-
       const contactIds = contactRows.map(c => c.contact_id);
-
-      // Then fetch profiles for those IDs
       const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', contactIds);
-
-      if (profileError) {
-        console.error('Error loading profiles:', profileError);
-        setContacts([]);
-      } else {
-        setContacts(profiles || []);
-      }
-    } catch (err) {
-      console.error('Error loading contacts:', err);
-      setContacts([]);
-    }
+        .from('profiles').select('*').in('id', contactIds);
+      if (profileError) { setContacts([]); } else { setContacts(profiles || []); }
+    } catch (err) { setContacts([]); }
     setLoadingContacts(false);
   };
 
@@ -65,54 +45,20 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
   const createGroup = async () => {
     if (!name.trim()) { toast.error('Enter a group name'); return; }
     if (selected.length === 0) { toast.error('Select at least one person'); return; }
-
     setLoading(true);
     try {
-      // Step 1: Create group
       const { data: group, error: groupError } = await supabase
-        .from('groups')
-        .insert({ name: name.trim(), created_by: me.id })
-        .select()
-        .single();
-
-      if (groupError || !group) {
-        toast.error('Failed to create group: ' + (groupError?.message || 'Unknown error'));
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Add creator as admin first
+        .from('groups').insert({ name: name.trim(), created_by: me.id }).select().single();
+      if (groupError || !group) { toast.error('Failed to create group'); setLoading(false); return; }
       const { error: creatorError } = await supabase
-        .from('group_members')
-        .insert({ group_id: group.id, user_id: me.id, role: 'admin' });
-
-      if (creatorError) {
-        toast.error('Failed to add you to group: ' + creatorError.message);
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Add selected members
+        .from('group_members').insert({ group_id: group.id, user_id: me.id, role: 'admin' });
+      if (creatorError) { toast.error('Failed to add you to group'); setLoading(false); return; }
       for (const uid of selected) {
-        const { error: memberError } = await supabase
-          .from('group_members')
-          .insert({
-            group_id: group.id,
-            user_id: uid,
-            role: 'member',
-          });
-
-        if (memberError) {
-          console.error(`Failed to add member ${uid}:`, memberError.message);
-        }
+        await supabase.from('group_members').insert({ group_id: group.id, user_id: uid, role: 'member' });
       }
-
       toast.success(`✅ Group "${name}" created with ${selected.length + 1} members`);
       onCreated(group.id);
-    } catch (err) {
-      toast.error('Something went wrong creating the group');
-      console.error(err);
-    }
+    } catch (err) { toast.error('Something went wrong creating the group'); }
     setLoading(false);
   };
 
@@ -124,11 +70,11 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
             <Users size={18} className="text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Create New Group</h3>
           </div>
-          <button onClick={onClose} className="text-wa-icon hover:text-foreground transition-colors"><X size={18} /></button>
+          <button onClick={onClose} className="text-app-icon hover:text-foreground transition-colors"><X size={18} /></button>
         </div>
 
         <div className="p-5 pb-3">
-          <input className="bg-wa-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full" placeholder="Group name" value={name} onChange={e => setName(e.target.value)} autoFocus />
+          <input className="bg-app-input-bg text-foreground border border-transparent rounded-lg px-3.5 py-2.5 text-sm focus:border-primary transition-colors placeholder:text-muted-foreground outline-none w-full" placeholder="Group name" value={name} onChange={e => setName(e.target.value)} autoFocus />
           <p className="text-xs text-muted-foreground mt-2">Select members to add:</p>
         </div>
 
@@ -136,12 +82,10 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
           {loadingContacts ? (
             <div className="text-center text-muted-foreground text-sm py-6">Loading contacts...</div>
           ) : contacts.length === 0 ? (
-            <div className="text-center text-muted-foreground text-sm py-6">
-              No contacts yet. Go to the People tab to add users first.
-            </div>
+            <div className="text-center text-muted-foreground text-sm py-6">No contacts yet. Go to the People tab to add users first.</div>
           ) : (
             contacts.map(c => (
-              <button key={c.id} onClick={() => toggleSelect(c.id)} className={`flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-lg transition-colors ${selected.includes(c.id) ? 'bg-primary/10' : 'hover:bg-wa-input-bg'}`}>
+              <button key={c.id} onClick={() => toggleSelect(c.id)} className={`flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-lg transition-colors ${selected.includes(c.id) ? 'bg-primary/10' : 'hover:bg-app-input-bg'}`}>
                 <Avatar name={c.display_name} size={40} avatarUrl={c.avatar_url} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-foreground truncate">{c.display_name}</div>
@@ -158,8 +102,8 @@ const CreateGroupModal = ({ me, onClose, onCreated }: CreateGroupModalProps) => 
         </div>
 
         <div className="flex gap-2.5 justify-end p-5 pt-3.5 border-t border-border">
-          <button onClick={onClose} className="bg-wa-input-bg text-foreground rounded-lg px-4 py-2 text-sm hover:bg-muted transition-colors">Cancel</button>
-          <button onClick={createGroup} disabled={loading || loadingContacts} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-wa-green-dark transition-colors disabled:opacity-50">
+          <button onClick={onClose} className="bg-app-input-bg text-foreground rounded-lg px-4 py-2 text-sm hover:bg-muted transition-colors">Cancel</button>
+          <button onClick={createGroup} disabled={loading || loadingContacts} className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-app-primary-dark transition-colors disabled:opacity-50">
             {loading ? 'Creating...' : `Create (${selected.length})`}
           </button>
         </div>

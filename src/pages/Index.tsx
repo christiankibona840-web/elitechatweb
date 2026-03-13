@@ -11,7 +11,7 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
 
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '3.0.0';
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
@@ -55,7 +55,6 @@ const Index = () => {
     }
   }, [session]);
 
-  // When profile loads and there's a pending target, look up the user and open chat
   useEffect(() => {
     if (!profile || !pendingTargetId) return;
 
@@ -67,7 +66,6 @@ const Index = () => {
         .single();
 
       if (targetProfile) {
-        // Add as contact if not already
         const { data: existing } = await supabase
           .from('contacts')
           .select('id')
@@ -118,7 +116,6 @@ const Index = () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
 
-    // Check admin role
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -172,7 +169,7 @@ const Index = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="text-5xl mb-4">💬</div>
+          <div className="text-5xl mb-4">⚡</div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>

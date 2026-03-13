@@ -151,6 +151,7 @@ const Index = () => {
     await supabase.auth.signOut();
     setProfile(null);
     setActiveChat(null);
+    setIsAdmin(false);
   };
 
   const handleMessagesChanged = useCallback(() => {

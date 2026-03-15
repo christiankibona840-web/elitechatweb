@@ -394,8 +394,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   if (!activeChat) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center app-pattern-bg text-center">
-        <div className="text-7xl mb-5">⚡</div>
-        <h2 className="text-2xl font-light text-foreground mb-3">EliteChat</h2>
+        <div className="text-7xl mb-5">💬</div>
+        <h2 className="text-2xl font-light text-foreground mb-3">YST Web Chat</h2>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px]">
           Select a conversation or search for users to start chatting.
         </p>

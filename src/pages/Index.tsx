@@ -150,6 +150,7 @@ const Index = () => {
     setProfile(null);
     setActiveChat(null);
     setIsAdmin(false);
+    setAdminView(null);
   };
 
   const handleMessagesChanged = useCallback(() => {

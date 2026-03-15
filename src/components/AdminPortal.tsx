@@ -19,7 +19,7 @@ interface AdminPortalProps {
   onBackToChoice?: () => void;
 }
 
-const AdminPortal = ({ onLogout }: AdminPortalProps) => {
+const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

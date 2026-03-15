@@ -169,7 +169,7 @@ const Index = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="text-5xl mb-4">⚡</div>
+          <div className="text-5xl mb-4">💬</div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>

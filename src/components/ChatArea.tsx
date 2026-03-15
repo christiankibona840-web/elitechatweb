@@ -21,13 +21,17 @@ interface ChatAreaProps {
 }
 
 const TypingIndicator = () => (
-  <div className="flex items-center gap-1 px-3 py-2">
-    <div className="flex gap-1">
-      {[0, 1, 2].map(i => (
-        <div key={i} className="w-2 h-2 bg-muted-foreground rounded-full" style={{ animation: `bounce-dot 1.2s infinite ${i * 0.15}s` }} />
-      ))}
+  <div className="flex items-end gap-2 mb-1 justify-start">
+    <div className="bg-app-bubble-in px-4 py-2.5 rounded-2xl rounded-bl-sm shadow-sm">
+      <div className="flex items-center gap-1.5">
+        <div className="flex gap-[3px]">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="w-[7px] h-[7px] bg-muted-foreground/70 rounded-full" 
+              style={{ animation: `bounce-dot 1.4s infinite ${i * 0.2}s` }} />
+          ))}
+        </div>
+      </div>
     </div>
-    <span className="text-xs text-muted-foreground ml-1">typing...</span>
   </div>
 );
 
@@ -394,8 +398,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   if (!activeChat) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center app-pattern-bg text-center">
-        <div className="text-7xl mb-5">⚡</div>
-        <h2 className="text-2xl font-light text-foreground mb-3">EliteChat</h2>
+        <div className="text-7xl mb-5">💬</div>
+        <h2 className="text-2xl font-light text-foreground mb-3">YST Web Chat</h2>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px]">
           Select a conversation or search for users to start chatting.
         </p>

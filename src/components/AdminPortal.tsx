@@ -16,9 +16,10 @@ interface AdminUser {
 
 interface AdminPortalProps {
   onLogout: () => void;
+  onBackToChoice?: () => void;
 }
 
-const AdminPortal = ({ onLogout }: AdminPortalProps) => {
+const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -142,6 +143,14 @@ const AdminPortal = ({ onLogout }: AdminPortalProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {onBackToChoice && (
+            <button
+              onClick={onBackToChoice}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm"
+            >
+              💬 Back to Chats
+            </button>
+          )}
           <button
             onClick={() => setShowPasswordForm(!showPasswordForm)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-accent transition-colors text-sm"

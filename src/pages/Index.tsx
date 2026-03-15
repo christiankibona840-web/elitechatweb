@@ -18,6 +18,7 @@ const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminView, setAdminView] = useState<'chat' | 'admin' | null>(null);
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
@@ -149,6 +150,7 @@ const Index = () => {
     setProfile(null);
     setActiveChat(null);
     setIsAdmin(false);
+    setAdminView(null);
   };
 
   const handleMessagesChanged = useCallback(() => {
@@ -180,8 +182,41 @@ const Index = () => {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
-  if (isAdmin) {
-    return <AdminPortal onLogout={handleLogout} />;
+  if (isAdmin && adminView === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-6">
+          <div className="text-5xl mb-2">💬</div>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back, {profile.display_name}</h1>
+          <p className="text-muted-foreground">Where would you like to go?</p>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setAdminView('chat')}
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all duration-200 min-w-[160px]"
+            >
+              <span className="text-4xl">💬</span>
+              <span className="font-semibold text-foreground">Chats</span>
+              <span className="text-xs text-muted-foreground">Go to messages</span>
+            </button>
+            <button
+              onClick={() => setAdminView('admin')}
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 transition-all duration-200 min-w-[160px]"
+            >
+              <span className="text-4xl">🛡️</span>
+              <span className="font-semibold text-foreground">Admin Portal</span>
+              <span className="text-xs text-muted-foreground">Manage users</span>
+            </button>
+          </div>
+          <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-foreground transition-colors mt-4">
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin && adminView === 'admin') {
+    return <AdminPortal onLogout={handleLogout} onBackToChoice={() => setAdminView(null)} />;
   }
 
   const showChatArea = !isMobile || activeChat;

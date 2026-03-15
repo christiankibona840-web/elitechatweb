@@ -80,7 +80,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
           <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg shadow-primary/40">
             ⚡
           </div>
-          <h1 className="text-xl font-semibold text-foreground">EliteChat</h1>
+          <h1 className="text-xl font-semibold text-foreground">YST Web Chat</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {targetContact
               ? `Sign in to chat with ${targetContact.name}`

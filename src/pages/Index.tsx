@@ -18,6 +18,7 @@ const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminView, setAdminView] = useState<'chat' | 'admin' | null>(null);
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);

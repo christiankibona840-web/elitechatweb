@@ -16,6 +16,7 @@ interface AdminUser {
 
 interface AdminPortalProps {
   onLogout: () => void;
+  onBackToChoice?: () => void;
 }
 
 const AdminPortal = ({ onLogout }: AdminPortalProps) => {

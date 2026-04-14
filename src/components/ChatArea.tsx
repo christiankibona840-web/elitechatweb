@@ -672,6 +672,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       {/* Voice recorder */}
       {showRecorder && <VoiceRecorder onSend={(blob) => sendMessage(blob)} onCancel={() => setShowRecorder(false)} />}
 
+      {/* Smart replies */}
+      <SmartReply messages={messages} myId={me.id} onSelect={(text) => { setInput(text); }} />
+
       {/* Input bar */}
       <div className="flex items-center gap-2 px-3.5 py-2.5 bg-app-header flex-shrink-0">
         <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />

@@ -707,6 +707,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       </div>
 
       {forwardMsg && <ForwardModal me={me} message={forwardMsg} onClose={() => setForwardMsg(null)} onForwarded={onMessagesChanged} />}
+      {showProfileView && contactProfile && (
+        <ProfileViewModal profile={contactProfile} onClose={() => setShowProfileView(false)} />
+      )}
       {showHeaderMenu && <div className="fixed inset-0 z-20" onClick={() => setShowHeaderMenu(false)} />}
     </div>
   );

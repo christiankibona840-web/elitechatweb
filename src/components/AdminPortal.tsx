@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle } from 'lucide-react';
+import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle, Megaphone } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface AdminUser {
@@ -30,11 +30,53 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [tab, setTab] = useState<'users' | 'blocked'>('users');
+  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements'>('users');
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementContent, setAnnouncementContent] = useState('');
+  const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+
+  const loadAnnouncements = async () => {
+    const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(20);
+    if (data) setAnnouncements(data);
+  };
+
+  const publishAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementContent.trim()) {
+      toast({ title: 'Please fill in title and content', variant: 'destructive' });
+      return;
+    }
+    setPublishingAnnouncement(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase.from('profiles').select('display_name, avatar_url').eq('id', user?.id).single();
+    const { error } = await supabase.from('announcements').insert({
+      title: announcementTitle.trim(),
+      content: announcementContent.trim(),
+      admin_id: user?.id,
+      admin_name: profile?.display_name || 'Admin',
+      admin_avatar: profile?.avatar_url || null,
+    });
+    if (error) {
+      toast({ title: 'Error publishing', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Announcement published!' });
+      setAnnouncementTitle('');
+      setAnnouncementContent('');
+      loadAnnouncements();
+    }
+    setPublishingAnnouncement(false);
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    await supabase.from('announcements').delete().eq('id', id);
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    toast({ title: 'Announcement deleted' });
+  };
 
   useEffect(() => {
     loadUsers();
     loadBlockedUsers();
+    loadAnnouncements();
   }, []);
 
   const loadUsers = async () => {

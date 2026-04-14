@@ -502,11 +502,11 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                 )}
               </tbody>
             </table>
+          </div>
         </div>
         </>
         )}
       </div>
-    </div>
     </div>
   );
 };

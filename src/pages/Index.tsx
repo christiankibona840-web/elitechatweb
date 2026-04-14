@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
 import AdminPortal from '@/components/AdminPortal';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
@@ -87,6 +88,15 @@ const Index = () => {
     openTargetChat();
   }, [profile, pendingTargetId]);
 
+  // Notification sound helper
+  const playNotificationSound = useCallback(() => {
+    try {
+      const audio = new Audio('/notification.wav');
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch {}
+  }, []);
+
   useEffect(() => {
     if (!profile) return;
 
@@ -99,6 +109,9 @@ const Index = () => {
         filter: `receiver_id=eq.${profile.id}`,
       }, async (payload) => {
         const msg = payload.new as any;
+        // Play double beep sound
+        playNotificationSound();
+
         if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
           const { data: sender } = await supabase.from('profiles').select('display_name').eq('id', msg.sender_id).single();
           new Notification(sender?.display_name || 'New Message', {
@@ -110,7 +123,7 @@ const Index = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [profile?.id]);
+  }, [profile?.id, playNotificationSound]);
 
   const loadProfile = async (userId: string) => {
     await new Promise(r => setTimeout(r, 500));
@@ -224,6 +237,7 @@ const Index = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <AnnouncementBanner />
       {showUpdateAlert && (
         <UpdateAlert
           version={APP_VERSION}

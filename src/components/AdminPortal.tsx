@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle } from 'lucide-react';
+import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle, Megaphone } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface AdminUser {
@@ -30,11 +30,53 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [tab, setTab] = useState<'users' | 'blocked'>('users');
+  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements'>('users');
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementContent, setAnnouncementContent] = useState('');
+  const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+
+  const loadAnnouncements = async () => {
+    const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(20);
+    if (data) setAnnouncements(data);
+  };
+
+  const publishAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementContent.trim()) {
+      toast({ title: 'Please fill in title and content', variant: 'destructive' });
+      return;
+    }
+    setPublishingAnnouncement(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase.from('profiles').select('display_name, avatar_url').eq('id', user?.id).single();
+    const { error } = await supabase.from('announcements').insert({
+      title: announcementTitle.trim(),
+      content: announcementContent.trim(),
+      admin_id: user?.id,
+      admin_name: profile?.display_name || 'Admin',
+      admin_avatar: profile?.avatar_url || null,
+    });
+    if (error) {
+      toast({ title: 'Error publishing', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Announcement published!' });
+      setAnnouncementTitle('');
+      setAnnouncementContent('');
+      loadAnnouncements();
+    }
+    setPublishingAnnouncement(false);
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    await supabase.from('announcements').delete().eq('id', id);
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    toast({ title: 'Announcement deleted' });
+  };
 
   useEffect(() => {
     loadUsers();
     loadBlockedUsers();
+    loadAnnouncements();
   }, []);
 
   const loadUsers = async () => {
@@ -247,7 +289,69 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'blocked' ? 'bg-destructive text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
             <Ban size={14} className="inline mr-1.5" /> Blocked ({blockedIds.size})
           </button>
+          <button onClick={() => setTab('announcements')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'announcements' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Megaphone size={14} className="inline mr-1.5" /> Announcements
+          </button>
         </div>
+
+        {tab === 'announcements' ? (
+          <div className="space-y-4">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Megaphone size={16} className="text-primary" /> Publish Announcement
+              </h3>
+              <input
+                placeholder="Announcement title..."
+                value={announcementTitle}
+                onChange={e => setAnnouncementTitle(e.target.value)}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors mb-3"
+              />
+              <textarea
+                placeholder="Announcement content..."
+                value={announcementContent}
+                onChange={e => setAnnouncementContent(e.target.value)}
+                rows={3}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors resize-none mb-3"
+              />
+              <button
+                onClick={publishAnnouncement}
+                disabled={publishingAnnouncement}
+                className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {publishingAnnouncement ? 'Publishing...' : '📢 Publish Announcement'}
+              </button>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <h3 className="text-sm font-semibold">Recent Announcements</h3>
+              </div>
+              {announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">No announcements yet</div>
+              ) : (
+                announcements.map(a => (
+                  <div key={a.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/50 last:border-0">
+                    <Megaphone size={16} className="text-primary mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-foreground">{a.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{a.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {new Date(a.created_at).toLocaleString()} · by {a.admin_name}
+                      </p>
+                    </div>
+                    <button onClick={() => deleteAnnouncement(a.id)}
+                      className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+        <>
+
 
         {/* Search */}
         <div className="relative mb-4">
@@ -400,6 +504,8 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
             </table>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

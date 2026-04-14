@@ -8,6 +8,7 @@ import ForwardModal from './ForwardModal';
 import MediaGallery from './MediaGallery';
 import StarredMessages from './StarredMessages';
 import SmartReply from './SmartReply';
+import ProfileViewModal from './ProfileViewModal';
 import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
@@ -66,7 +67,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [disappearSetting, setDisappearSetting] = useState(0);
   const [showDisappearPicker, setShowDisappearPicker] = useState(false);
-
+  const [showProfileView, setShowProfileView] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -490,7 +491,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
               <ArrowLeft size={20} />
             </button>
           )}
-          <Avatar name={chatName} size={42} avatarUrl={activeChat.type === 'dm' ? contactProfile?.avatar_url : groupInfo?.avatar_url} />
+          <div className="cursor-pointer" onClick={() => activeChat.type === 'dm' && contactProfile && setShowProfileView(true)}>
+            <Avatar name={chatName} size={42} avatarUrl={activeChat.type === 'dm' ? contactProfile?.avatar_url : groupInfo?.avatar_url} />
+          </div>
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
             <div className={`text-xs ${contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
@@ -704,6 +707,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       </div>
 
       {forwardMsg && <ForwardModal me={me} message={forwardMsg} onClose={() => setForwardMsg(null)} onForwarded={onMessagesChanged} />}
+      {showProfileView && contactProfile && (
+        <ProfileViewModal profile={contactProfile} onClose={() => setShowProfileView(false)} />
+      )}
       {showHeaderMenu && <div className="fixed inset-0 z-20" onClick={() => setShowHeaderMenu(false)} />}
     </div>
   );

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          admin_avatar: string | null
+          admin_id: string
+          admin_name: string
+          content: string
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          admin_avatar?: string | null
+          admin_id: string
+          admin_name?: string
+          content: string
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          admin_avatar?: string | null
+          admin_id?: string
+          admin_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_id: string

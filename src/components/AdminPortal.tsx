@@ -289,7 +289,69 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'blocked' ? 'bg-destructive text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
             <Ban size={14} className="inline mr-1.5" /> Blocked ({blockedIds.size})
           </button>
+          <button onClick={() => setTab('announcements')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'announcements' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Megaphone size={14} className="inline mr-1.5" /> Announcements
+          </button>
         </div>
+
+        {tab === 'announcements' ? (
+          <div className="space-y-4">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Megaphone size={16} className="text-primary" /> Publish Announcement
+              </h3>
+              <input
+                placeholder="Announcement title..."
+                value={announcementTitle}
+                onChange={e => setAnnouncementTitle(e.target.value)}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors mb-3"
+              />
+              <textarea
+                placeholder="Announcement content..."
+                value={announcementContent}
+                onChange={e => setAnnouncementContent(e.target.value)}
+                rows={3}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors resize-none mb-3"
+              />
+              <button
+                onClick={publishAnnouncement}
+                disabled={publishingAnnouncement}
+                className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {publishingAnnouncement ? 'Publishing...' : '📢 Publish Announcement'}
+              </button>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <h3 className="text-sm font-semibold">Recent Announcements</h3>
+              </div>
+              {announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">No announcements yet</div>
+              ) : (
+                announcements.map(a => (
+                  <div key={a.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/50 last:border-0">
+                    <Megaphone size={16} className="text-primary mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-foreground">{a.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{a.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {new Date(a.created_at).toLocaleString()} · by {a.admin_name}
+                      </p>
+                    </div>
+                    <button onClick={() => deleteAnnouncement(a.id)}
+                      className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+        <>
+
 
         {/* Search */}
         <div className="relative mb-4">

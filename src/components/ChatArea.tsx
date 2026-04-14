@@ -7,6 +7,7 @@ import MessageActions from './MessageActions';
 import ForwardModal from './ForwardModal';
 import MediaGallery from './MediaGallery';
 import StarredMessages from './StarredMessages';
+import SmartReply from './SmartReply';
 import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';

@@ -7,6 +7,7 @@ import MessageActions from './MessageActions';
 import ForwardModal from './ForwardModal';
 import MediaGallery from './MediaGallery';
 import StarredMessages from './StarredMessages';
+import SmartReply from './SmartReply';
 import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
@@ -670,6 +671,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
 
       {/* Voice recorder */}
       {showRecorder && <VoiceRecorder onSend={(blob) => sendMessage(blob)} onCancel={() => setShowRecorder(false)} />}
+
+      {/* Smart replies */}
+      <SmartReply messages={messages} myId={me.id} onSelect={(text) => { setInput(text); }} />
 
       {/* Input bar */}
       <div className="flex items-center gap-2 px-3.5 py-2.5 bg-app-header flex-shrink-0">

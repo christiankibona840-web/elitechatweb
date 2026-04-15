@@ -69,10 +69,13 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [disappearSetting, setDisappearSetting] = useState(0);
   const [showDisappearPicker, setShowDisappearPicker] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
+  const [botLoading, setBotLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const isBot = activeChat?.type === 'dm' && activeChat?.id === LOVABLE_BOT_ID;
 
   useEffect(() => {
     const handler = (e: Event) => setWallpaper((e as CustomEvent).detail || '');

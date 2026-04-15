@@ -313,6 +313,67 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     if (!text && !fileToSend) return;
     if (!activeChat) return;
 
+    // Handle Lovable AI bot messages
+    if (isBot) {
+      if (!text) return;
+      const userMsg = {
+        id: `bot-user-${Date.now()}`,
+        sender_id: me.id,
+        receiver_id: LOVABLE_BOT_ID,
+        content: text,
+        created_at: new Date().toISOString(),
+        status: 'read',
+      };
+      const updatedMessages = [...messages, userMsg];
+      setMessages(updatedMessages);
+      setInput('');
+      setReplyTo(null);
+      setBotLoading(true);
+      setIsTyping(true);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('lovable-chat', {
+          body: {
+            messages: updatedMessages.map(m => ({
+              isMe: m.sender_id === me.id,
+              content: m.content,
+            })),
+          },
+        });
+
+        if (error) throw error;
+
+        const botReply = {
+          id: `bot-reply-${Date.now()}`,
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: data?.reply || data?.error || "I couldn't process that. Try again! 💜",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        const finalMessages = [...updatedMessages, botReply];
+        setMessages(finalMessages);
+        localStorage.setItem(`bot-chat-${me.id}`, JSON.stringify(finalMessages));
+      } catch (e) {
+        console.error('Bot error:', e);
+        const errorReply = {
+          id: `bot-error-${Date.now()}`,
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: "Oops! Something went wrong. Please try again 😅",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        const finalMessages = [...updatedMessages, errorReply];
+        setMessages(finalMessages);
+        localStorage.setItem(`bot-chat-${me.id}`, JSON.stringify(finalMessages));
+      } finally {
+        setBotLoading(false);
+        setIsTyping(false);
+      }
+      return;
+    }
+
     setUploading(true);
     let fileData: { url: string; name: string; type: string } | null = null;
     if (fileToSend) {

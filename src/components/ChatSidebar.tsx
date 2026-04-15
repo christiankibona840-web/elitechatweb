@@ -8,6 +8,7 @@ import StatusPanel from './StatusPanel';
 import SettingsPanel from './SettingsPanel';
 import PeoplePanel from './PeoplePanel';
 import ProjectZone from './ProjectZone';
+import { LOVABLE_BOT_ID, LOVABLE_BOT_PROFILE } from '@/lib/lovableBot';
 import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -123,7 +124,16 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
       return new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime();
     });
 
-    setConversations(items);
+    // Always add Lovable AI bot at the top
+    const botConvo: ConversationItem = {
+      type: 'dm',
+      id: LOVABLE_BOT_ID,
+      name: '💜 Lovable AI',
+      lastMessage: 'Ask me anything!',
+      lastTime: null,
+      unread: 0,
+    };
+    setConversations([botConvo, ...items]);
   };
 
   const copyId = () => {
@@ -213,7 +223,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
                   onClick={() => onSelectChat({ type: item.type, id: item.id })}
                   className={`flex items-center gap-3 px-4 py-2.5 w-full text-left transition-colors hover:bg-app-input-bg ${isActive(item) ? 'bg-app-input-bg' : ''}`}
                 >
-                  <Avatar name={item.name} size={50} />
+                  <Avatar name={item.name} size={50} avatarUrl={item.id === LOVABLE_BOT_ID ? LOVABLE_BOT_PROFILE.avatar_url : undefined} />
                   <div className="flex-1 min-w-0 border-b border-border pb-2.5">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-foreground truncate max-w-[130px]">

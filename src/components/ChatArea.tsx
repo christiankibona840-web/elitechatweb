@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fmtTime, fmtDate } from '@/lib/chatStore';
+import { LOVABLE_BOT_ID, LOVABLE_BOT_PROFILE } from '@/lib/lovableBot';
 import Avatar from './Avatar';
 import VoiceRecorder from './VoiceRecorder';
 import MessageActions from './MessageActions';
@@ -68,10 +69,13 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [disappearSetting, setDisappearSetting] = useState(0);
   const [showDisappearPicker, setShowDisappearPicker] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
+  const [botLoading, setBotLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const isBot = activeChat?.type === 'dm' && activeChat?.id === LOVABLE_BOT_ID;
 
   useEffect(() => {
     const handler = (e: Event) => setWallpaper((e as CustomEvent).detail || '');
@@ -87,6 +91,28 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     setShowStarred(false);
     setShowHeaderMenu(false);
     setShowDisappearPicker(false);
+
+    // Handle Lovable AI bot chat
+    if (activeChat.type === 'dm' && activeChat.id === LOVABLE_BOT_ID) {
+      setContactProfile(LOVABLE_BOT_PROFILE as any);
+      // Load bot messages from localStorage
+      const saved = localStorage.getItem(`bot-chat-${me.id}`);
+      if (saved) {
+        try { setMessages(JSON.parse(saved)); } catch { setMessages([]); }
+      } else {
+        // Welcome message
+        const welcome = {
+          id: 'bot-welcome',
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: "Hey there! 👋 I'm Lovable AI, your friendly assistant built right into YST Web Chat! 💜\n\nAsk me anything — I can help with questions, have fun conversations, assist with coding, math, writing, and much more!\n\nWhat would you like to chat about? 😊",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        setMessages([welcome]);
+      }
+      return;
+    }
 
     if (activeChat.type === 'dm') {
       loadDmMessages(activeChat.id);
@@ -287,6 +313,67 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     if (!text && !fileToSend) return;
     if (!activeChat) return;
 
+    // Handle Lovable AI bot messages
+    if (isBot) {
+      if (!text) return;
+      const userMsg = {
+        id: `bot-user-${Date.now()}`,
+        sender_id: me.id,
+        receiver_id: LOVABLE_BOT_ID,
+        content: text,
+        created_at: new Date().toISOString(),
+        status: 'read',
+      };
+      const updatedMessages = [...messages, userMsg];
+      setMessages(updatedMessages);
+      setInput('');
+      setReplyTo(null);
+      setBotLoading(true);
+      setIsTyping(true);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('lovable-chat', {
+          body: {
+            messages: updatedMessages.map(m => ({
+              isMe: m.sender_id === me.id,
+              content: m.content,
+            })),
+          },
+        });
+
+        if (error) throw error;
+
+        const botReply = {
+          id: `bot-reply-${Date.now()}`,
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: data?.reply || data?.error || "I couldn't process that. Try again! 💜",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        const finalMessages = [...updatedMessages, botReply];
+        setMessages(finalMessages);
+        localStorage.setItem(`bot-chat-${me.id}`, JSON.stringify(finalMessages));
+      } catch (e) {
+        console.error('Bot error:', e);
+        const errorReply = {
+          id: `bot-error-${Date.now()}`,
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: "Oops! Something went wrong. Please try again 😅",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        const finalMessages = [...updatedMessages, errorReply];
+        setMessages(finalMessages);
+        localStorage.setItem(`bot-chat-${me.id}`, JSON.stringify(finalMessages));
+      } finally {
+        setBotLoading(false);
+        setIsTyping(false);
+      }
+      return;
+    }
+
     setUploading(true);
     let fileData: { url: string; name: string; type: string } | null = null;
     if (fileToSend) {
@@ -409,10 +496,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     );
   }
 
-  const chatName = activeChat.type === 'dm' ? contactProfile?.display_name || '...' : groupInfo?.name || '...';
-  const subtitle = activeChat.type === 'dm'
-    ? (contactProfile?.is_online ? 'online' : 'offline')
-    : 'Group';
+  const chatName = isBot ? '💜 Lovable AI' : (activeChat.type === 'dm' ? contactProfile?.display_name || '...' : groupInfo?.name || '...');
+  const subtitle = isBot
+    ? (botLoading ? 'typing...' : 'AI Assistant • Always online')
+    : activeChat.type === 'dm'
+      ? (contactProfile?.is_online ? 'online' : 'offline')
+      : 'Group';
 
   let lastDate = '';
 
@@ -496,8 +585,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           </div>
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
-            <div className={`text-xs ${contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
-              {isTyping ? 'typing...' : subtitle}
+            <div className={`text-xs ${isBot || contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
+              {!isBot && isTyping ? 'typing...' : subtitle}
               {disappearSetting > 0 && <span className="ml-1.5">⏱</span>}
             </div>
           </div>

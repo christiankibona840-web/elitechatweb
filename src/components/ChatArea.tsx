@@ -585,8 +585,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           </div>
           <div>
             <div className="text-sm font-medium text-foreground">{chatName}</div>
-            <div className={`text-xs ${contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
-              {isTyping ? 'typing...' : subtitle}
+            <div className={`text-xs ${isBot || contactProfile?.is_online ? 'text-app-online' : 'text-muted-foreground'}`}>
+              {!isBot && isTyping ? 'typing...' : subtitle}
               {disappearSetting > 0 && <span className="ml-1.5">⏱</span>}
             </div>
           </div>

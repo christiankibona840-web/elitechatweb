@@ -496,10 +496,12 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     );
   }
 
-  const chatName = activeChat.type === 'dm' ? contactProfile?.display_name || '...' : groupInfo?.name || '...';
-  const subtitle = activeChat.type === 'dm'
-    ? (contactProfile?.is_online ? 'online' : 'offline')
-    : 'Group';
+  const chatName = isBot ? '💜 Lovable AI' : (activeChat.type === 'dm' ? contactProfile?.display_name || '...' : groupInfo?.name || '...');
+  const subtitle = isBot
+    ? (botLoading ? 'typing...' : 'AI Assistant • Always online')
+    : activeChat.type === 'dm'
+      ? (contactProfile?.is_online ? 'online' : 'offline')
+      : 'Group';
 
   let lastDate = '';
 

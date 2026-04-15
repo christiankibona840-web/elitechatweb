@@ -92,6 +92,28 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     setShowHeaderMenu(false);
     setShowDisappearPicker(false);
 
+    // Handle Lovable AI bot chat
+    if (activeChat.type === 'dm' && activeChat.id === LOVABLE_BOT_ID) {
+      setContactProfile(LOVABLE_BOT_PROFILE as any);
+      // Load bot messages from localStorage
+      const saved = localStorage.getItem(`bot-chat-${me.id}`);
+      if (saved) {
+        try { setMessages(JSON.parse(saved)); } catch { setMessages([]); }
+      } else {
+        // Welcome message
+        const welcome = {
+          id: 'bot-welcome',
+          sender_id: LOVABLE_BOT_ID,
+          receiver_id: me.id,
+          content: "Hey there! 👋 I'm Lovable AI, your friendly assistant built right into YST Web Chat! 💜\n\nAsk me anything — I can help with questions, have fun conversations, assist with coding, math, writing, and much more!\n\nWhat would you like to chat about? 😊",
+          created_at: new Date().toISOString(),
+          status: 'read',
+        };
+        setMessages([welcome]);
+      }
+      return;
+    }
+
     if (activeChat.type === 'dm') {
       loadDmMessages(activeChat.id);
       loadContactProfile(activeChat.id);

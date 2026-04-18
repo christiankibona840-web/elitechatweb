@@ -12,7 +12,7 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
 
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '2.24.12';
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);

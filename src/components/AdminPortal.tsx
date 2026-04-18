@@ -174,14 +174,14 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+      <header className="bg-gradient-hero border-b border-accent/30 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-elegant">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <Shield size={20} className="text-primary-foreground" />
+          <div className="w-11 h-11 rounded-full bg-gradient-gold flex items-center justify-center shadow-gold ring-2 ring-accent/40">
+            <Shield size={20} className="text-accent-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">YST Admin Portal</h1>
-            <p className="text-xs text-muted-foreground">Full control over users & settings</p>
+            <h1 className="font-display text-xl font-bold text-brand-light tracking-tight">YST Admin Portal</h1>
+            <p className="text-xs text-brand-light/70">Full control over users & settings</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -233,46 +233,46 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                <Users size={18} className="text-primary" />
+              <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
+                <Users size={18} className="text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.length}</p>
+                <p className="text-2xl font-bold font-display">{users.length}</p>
                 <p className="text-xs text-muted-foreground">Total Users</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-app-online/15 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-app-online animate-pulse" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.filter(u => u.is_online).length}</p>
+                <p className="text-2xl font-bold font-display">{users.filter(u => u.is_online).length}</p>
                 <p className="text-xs text-muted-foreground">Online Now</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <div className="w-10 h-10 rounded-lg bg-secondary/40 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.filter(u => !u.is_online).length}</p>
+                <p className="text-2xl font-bold font-display">{users.filter(u => !u.is_online).length}</p>
                 <p className="text-xs text-muted-foreground">Offline</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-destructive/40 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-destructive/15 flex items-center justify-center">
                 <Ban size={18} className="text-destructive" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{blockedIds.size}</p>
+                <p className="text-2xl font-bold font-display">{blockedIds.size}</p>
                 <p className="text-xs text-muted-foreground">Blocked</p>
               </div>
             </div>
@@ -317,7 +317,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <button
                 onClick={publishAnnouncement}
                 disabled={publishingAnnouncement}
-                className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="px-5 py-2 bg-gradient-gold text-accent-foreground rounded-lg text-sm font-semibold hover:shadow-gold-strong transition-all disabled:opacity-50"
               >
                 {publishingAnnouncement ? 'Publishing...' : '📢 Publish Announcement'}
               </button>
@@ -379,8 +379,8 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span>Joined: {formatDate(selectedUser.created_at)}</span>
                     <span>Last seen: {formatLastSeen(selectedUser.last_seen)}</span>
-                    <span className={`inline-flex items-center gap-1 ${selectedUser.is_online ? 'text-green-400' : ''}`}>
-                      <span className={`w-2 h-2 rounded-full ${selectedUser.is_online ? 'bg-green-400' : 'bg-muted-foreground'}`} />
+                    <span className={`inline-flex items-center gap-1 ${selectedUser.is_online ? 'text-app-online' : ''}`}>
+                      <span className={`w-2 h-2 rounded-full ${selectedUser.is_online ? 'bg-app-online' : 'bg-muted-foreground'}`} />
                       {selectedUser.is_online ? 'Online' : 'Offline'}
                     </span>
                   </div>
@@ -391,7 +391,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
             <div className="flex gap-2 mt-4">
               {blockedIds.has(selectedUser.id) ? (
                 <button onClick={() => unblockUser(selectedUser.id, selectedUser.display_name)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors text-sm">
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-app-online/15 text-app-online hover:bg-app-online/25 transition-colors text-sm">
                   <CheckCircle size={16} /> Unblock User
                 </button>
               ) : (
@@ -449,7 +449,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                               )}
                             </div>
                             {user.is_online && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-app-online rounded-full border-2 border-card" />
                             )}
                           </div>
                           <div>
@@ -469,9 +469,9 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           </span>
                         ) : (
                           <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
-                            user.is_online ? 'bg-green-500/15 text-green-400' : 'bg-muted text-muted-foreground'
+                            user.is_online ? 'bg-app-online/15 text-app-online' : 'bg-muted text-muted-foreground'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-green-400' : 'bg-muted-foreground'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-app-online' : 'bg-muted-foreground'}`} />
                             {user.is_online ? 'Online' : 'Offline'}
                           </span>
                         )}
@@ -482,12 +482,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                         <div className="flex items-center justify-end gap-1">
                           {blockedIds.has(user.id) ? (
                             <button onClick={() => unblockUser(user.id, user.display_name)}
-                              className="p-2 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors" title="Unblock user">
+                              className="p-2 rounded-lg text-app-online hover:bg-app-online/10 transition-colors" title="Unblock user">
                               <CheckCircle size={16} />
                             </button>
                           ) : (
                             <button onClick={() => blockUser(user.id, user.display_name)}
-                              className="p-2 rounded-lg text-orange-400 hover:bg-orange-500/10 transition-colors" title="Block user">
+                              className="p-2 rounded-lg text-accent hover:bg-accent/10 transition-colors" title="Block user">
                               <Ban size={16} />
                             </button>
                           )}

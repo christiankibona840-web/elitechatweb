@@ -469,9 +469,9 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           </span>
                         ) : (
                           <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
-                            user.is_online ? 'bg-green-500/15 text-green-400' : 'bg-muted text-muted-foreground'
+                            user.is_online ? 'bg-app-online/15 text-app-online' : 'bg-muted text-muted-foreground'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-green-400' : 'bg-muted-foreground'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-app-online' : 'bg-muted-foreground'}`} />
                             {user.is_online ? 'Online' : 'Offline'}
                           </span>
                         )}

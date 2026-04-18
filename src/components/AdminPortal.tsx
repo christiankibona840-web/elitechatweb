@@ -317,7 +317,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <button
                 onClick={publishAnnouncement}
                 disabled={publishingAnnouncement}
-                className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="px-5 py-2 bg-gradient-gold text-accent-foreground rounded-lg text-sm font-semibold hover:shadow-gold-strong transition-all disabled:opacity-50"
               >
                 {publishingAnnouncement ? 'Publishing...' : '📢 Publish Announcement'}
               </button>

@@ -379,8 +379,8 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span>Joined: {formatDate(selectedUser.created_at)}</span>
                     <span>Last seen: {formatLastSeen(selectedUser.last_seen)}</span>
-                    <span className={`inline-flex items-center gap-1 ${selectedUser.is_online ? 'text-green-400' : ''}`}>
-                      <span className={`w-2 h-2 rounded-full ${selectedUser.is_online ? 'bg-green-400' : 'bg-muted-foreground'}`} />
+                    <span className={`inline-flex items-center gap-1 ${selectedUser.is_online ? 'text-app-online' : ''}`}>
+                      <span className={`w-2 h-2 rounded-full ${selectedUser.is_online ? 'bg-app-online' : 'bg-muted-foreground'}`} />
                       {selectedUser.is_online ? 'Online' : 'Offline'}
                     </span>
                   </div>
@@ -391,7 +391,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
             <div className="flex gap-2 mt-4">
               {blockedIds.has(selectedUser.id) ? (
                 <button onClick={() => unblockUser(selectedUser.id, selectedUser.display_name)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors text-sm">
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-app-online/15 text-app-online hover:bg-app-online/25 transition-colors text-sm">
                   <CheckCircle size={16} /> Unblock User
                 </button>
               ) : (

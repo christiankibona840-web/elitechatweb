@@ -174,14 +174,14 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+      <header className="bg-gradient-hero border-b border-accent/30 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-elegant">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <Shield size={20} className="text-primary-foreground" />
+          <div className="w-11 h-11 rounded-full bg-gradient-gold flex items-center justify-center shadow-gold ring-2 ring-accent/40">
+            <Shield size={20} className="text-accent-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">YST Admin Portal</h1>
-            <p className="text-xs text-muted-foreground">Full control over users & settings</p>
+            <h1 className="font-display text-xl font-bold text-brand-light tracking-tight">YST Admin Portal</h1>
+            <p className="text-xs text-brand-light/70">Full control over users & settings</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

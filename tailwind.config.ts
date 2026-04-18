@@ -60,6 +60,8 @@ export default {
         app: {
           primary: "hsl(var(--app-primary))",
           "primary-dark": "hsl(var(--app-primary-dark))",
+          accent: "hsl(var(--app-accent))",
+          "accent-light": "hsl(var(--app-accent-light))",
           "bubble-out": "hsl(var(--app-bubble-out))",
           panel: "hsl(var(--app-panel))",
           "chat-bg": "hsl(var(--app-chat-bg))",
@@ -69,6 +71,26 @@ export default {
           online: "hsl(var(--app-online))",
           icon: "hsl(var(--app-icon))",
         },
+        brand: {
+          primary: "hsl(var(--brand-primary))",
+          secondary: "hsl(var(--brand-secondary))",
+          accent: "hsl(var(--brand-accent))",
+          light: "hsl(var(--brand-light))",
+          dark: "hsl(var(--brand-dark))",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+      },
+      backgroundImage: {
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-gold': 'var(--gradient-gold)',
+      },
+      boxShadow: {
+        gold: 'var(--shadow-gold)',
+        'gold-strong': 'var(--shadow-gold-strong)',
+        elegant: 'var(--shadow-elegant)',
       },
       borderRadius: {
         lg: "var(--radius)",

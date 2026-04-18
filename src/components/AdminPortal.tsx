@@ -233,46 +233,46 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                <Users size={18} className="text-primary" />
+              <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
+                <Users size={18} className="text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.length}</p>
+                <p className="text-2xl font-bold font-display">{users.length}</p>
                 <p className="text-xs text-muted-foreground">Total Users</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-app-online/15 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-app-online animate-pulse" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.filter(u => u.is_online).length}</p>
+                <p className="text-2xl font-bold font-display">{users.filter(u => u.is_online).length}</p>
                 <p className="text-xs text-muted-foreground">Online Now</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-accent/40 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <div className="w-10 h-10 rounded-lg bg-secondary/40 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.filter(u => !u.is_online).length}</p>
+                <p className="text-2xl font-bold font-display">{users.filter(u => !u.is_online).length}</p>
                 <p className="text-xs text-muted-foreground">Offline</p>
               </div>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-destructive/40 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-destructive/15 flex items-center justify-center">
                 <Ban size={18} className="text-destructive" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{blockedIds.size}</p>
+                <p className="text-2xl font-bold font-display">{blockedIds.size}</p>
                 <p className="text-xs text-muted-foreground">Blocked</p>
               </div>
             </div>

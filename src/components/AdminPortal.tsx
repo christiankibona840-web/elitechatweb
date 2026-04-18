@@ -482,12 +482,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                         <div className="flex items-center justify-end gap-1">
                           {blockedIds.has(user.id) ? (
                             <button onClick={() => unblockUser(user.id, user.display_name)}
-                              className="p-2 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors" title="Unblock user">
+                              className="p-2 rounded-lg text-app-online hover:bg-app-online/10 transition-colors" title="Unblock user">
                               <CheckCircle size={16} />
                             </button>
                           ) : (
                             <button onClick={() => blockUser(user.id, user.display_name)}
-                              className="p-2 rounded-lg text-orange-400 hover:bg-orange-500/10 transition-colors" title="Block user">
+                              className="p-2 rounded-lg text-accent hover:bg-accent/10 transition-colors" title="Block user">
                               <Ban size={16} />
                             </button>
                           )}

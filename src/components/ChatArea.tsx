@@ -70,6 +70,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [showDisappearPicker, setShowDisappearPicker] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
   const [botLoading, setBotLoading] = useState(false);
+  const [editingMsg, setEditingMsg] = useState<{ id: string; content: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -441,6 +442,19 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       setStarredIds(prev => new Set(prev).add(msgId));
       toast.success('Starred');
     }
+  };
+
+  const saveEdit = async () => {
+    if (!editingMsg || !activeChat) return;
+    const newContent = editingMsg.content.trim();
+    if (!newContent) { toast.error('Message cannot be empty'); return; }
+    const table = activeChat.type === 'dm' ? 'messages' : 'group_messages';
+    const editedAt = new Date().toISOString();
+    const { error } = await supabase.from(table).update({ content: newContent, edited_at: editedAt }).eq('id', editingMsg.id);
+    if (error) { toast.error('Failed to edit'); return; }
+    setMessages(prev => prev.map(m => m.id === editingMsg.id ? { ...m, content: newContent, edited_at: editedAt } : m));
+    setEditingMsg(null);
+    toast.success('Message edited');
   };
 
   const handleSearch = (query: string) => {

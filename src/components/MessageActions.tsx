@@ -1,19 +1,21 @@
 import { useState } from 'react';
-import { Reply, Trash2, Forward, SmilePlus, Star } from 'lucide-react';
+import { Reply, Trash2, Forward, SmilePlus, Star, Pencil } from 'lucide-react';
 
 const QUICK_EMOJIS = ['❤️', '😂', '👍', '😮', '😢', '🙏'];
 
 interface MessageActionsProps {
   isMe: boolean;
   isStarred?: boolean;
+  canEdit?: boolean;
   onReply: () => void;
   onDelete: () => void;
   onForward: () => void;
   onReact: (emoji: string) => void;
   onStar: () => void;
+  onEdit?: () => void;
 }
 
-const MessageActions = ({ isMe, isStarred, onReply, onDelete, onForward, onReact, onStar }: MessageActionsProps) => {
+const MessageActions = ({ isMe, isStarred, canEdit, onReply, onDelete, onForward, onReact, onStar, onEdit }: MessageActionsProps) => {
   const [showEmojis, setShowEmojis] = useState(false);
 
   return (
@@ -39,6 +41,11 @@ const MessageActions = ({ isMe, isStarred, onReply, onDelete, onForward, onReact
       <button onClick={onForward} className="text-muted-foreground hover:text-foreground p-1 rounded-full" title="Forward">
         <Forward size={14} />
       </button>
+      {isMe && canEdit && onEdit && (
+        <button onClick={onEdit} className="text-muted-foreground hover:text-foreground p-1 rounded-full" title="Edit message">
+          <Pencil size={14} />
+        </button>
+      )}
       {isMe && (
         <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1 rounded-full" title="Delete for everyone">
           <Trash2 size={14} />

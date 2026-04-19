@@ -6,6 +6,7 @@ import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
 import AdminPortal from '@/components/AdminPortal';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import ReelsPanel from '@/components/ReelsPanel';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
@@ -291,6 +292,7 @@ const Index = () => {
           onBack={isMobile ? () => setActiveChat(null) : undefined}
         />
       )}
+      {!isMobile && <ReelsPanel />}
     </div>
   );
 };

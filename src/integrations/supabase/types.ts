@@ -178,6 +178,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           deleted_for_everyone: boolean | null
+          edited_at: string | null
           file_name: string | null
           file_type: string | null
           file_url: string | null
@@ -190,6 +191,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           deleted_for_everyone?: boolean | null
+          edited_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           deleted_for_everyone?: boolean | null
+          edited_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -302,6 +305,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           deleted_for_everyone: boolean | null
+          edited_at: string | null
           file_name: string | null
           file_type: string | null
           file_url: string | null
@@ -315,6 +319,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           deleted_for_everyone?: boolean | null
+          edited_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
@@ -328,6 +333,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           deleted_for_everyone?: boolean | null
+          edited_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null

@@ -730,10 +730,32 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                       )}
                       {senderName && <div className="text-xs font-semibold text-primary mb-0.5">{senderName}</div>}
                       {renderFilePreview(msg)}
-                      {msg.content && <div>{msg.content}</div>}
+                      {editingMsg?.id === msg.id ? (
+                        <div className="flex flex-col gap-1.5 min-w-[220px]">
+                          <textarea
+                            autoFocus
+                            spellCheck
+                            value={editingMsg.content}
+                            onChange={(e) => setEditingMsg({ ...editingMsg, content: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(); }
+                              if (e.key === 'Escape') setEditingMsg(null);
+                            }}
+                            rows={2}
+                            className="w-full bg-background/80 text-foreground text-sm rounded-md px-2 py-1 outline-none border border-primary/40 resize-none"
+                          />
+                          <div className="flex gap-1.5 justify-end">
+                            <button onClick={() => setEditingMsg(null)} className="text-[11px] px-2 py-0.5 rounded hover:bg-muted/40 text-muted-foreground">Cancel</button>
+                            <button onClick={saveEdit} className="text-[11px] px-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90">Save</button>
+                          </div>
+                        </div>
+                      ) : (
+                        msg.content && <div>{msg.content}</div>
+                      )}
                     </>
                   )}
                   <div className="flex items-center justify-end gap-1 mt-0.5">
+                    {msg.edited_at && !isDeleted && <span className="text-[10px] italic text-muted-foreground/70">edited</span>}
                     {starredIds.has(msg.id) && <Star size={10} className="text-yellow-400 fill-yellow-400" />}
                     <span className={`text-[10px] ${isMe ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>{fmtTime(msg.created_at)}</span>
                     {renderTicks(msg)}
@@ -742,6 +764,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                 </div>
                 {isMe && !isDeleted && (
                   <MessageActions isMe={true} isStarred={starredIds.has(msg.id)}
+                    canEdit={!!msg.content && !msg.file_url && !isBot}
+                    onEdit={() => setEditingMsg({ id: msg.id, content: msg.content || '' })}
                     onReply={handleReply} onDelete={() => deleteForEveryone(msg)} onForward={() => setForwardMsg(msg)}
                     onReact={(emoji) => toggleReaction(msg.id, emoji)} onStar={() => toggleStar(msg.id)} />
                 )}
@@ -791,6 +815,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           <input
             className="w-full bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground"
             placeholder="Type a message…"
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             value={input}
             onChange={e => { setInput(e.target.value); broadcastTyping(); }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}

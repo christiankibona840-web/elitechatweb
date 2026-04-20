@@ -134,6 +134,72 @@ export type Database = {
         }
         Relationships: []
       }
+      game_invites: {
+        Row: {
+          created_at: string
+          from_user: string
+          game_id: string | null
+          id: string
+          status: string
+          to_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_user: string
+          game_id?: string | null
+          id?: string
+          status?: string
+          to_user: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_user?: string
+          game_id?: string | null
+          id?: string
+          status?: string
+          to_user?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          board: string[]
+          created_at: string
+          current_turn: string
+          id: string
+          player_o: string
+          player_x: string
+          status: string
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          board?: string[]
+          created_at?: string
+          current_turn?: string
+          id?: string
+          player_o: string
+          player_x: string
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          board?: string[]
+          created_at?: string
+          current_turn?: string
+          id?: string
+          player_o?: string
+          player_x?: string
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string

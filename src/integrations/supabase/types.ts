@@ -488,6 +488,30 @@ export type Database = {
           },
         ]
       }
+      reels: {
+        Row: {
+          added_by: string
+          created_at: string
+          id: string
+          position: number
+          url: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          id?: string
+          position?: number
+          url: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          position?: number
+          url?: string
+        }
+        Relationships: []
+      }
       starred_messages: {
         Row: {
           chat_id: string

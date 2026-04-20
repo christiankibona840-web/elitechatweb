@@ -267,6 +267,71 @@ const Index = () => {
     return <AdminPortal onLogout={handleLogout} onBackToChoice={() => setAdminView(null)} />;
   }
 
+  if (isReelManager && !isAdmin && reelManagerView === null) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-hero p-6">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute h-1 w-1 rounded-full bg-accent/60"
+              style={{
+                left: `${(i * 53) % 100}%`,
+                animation: `float-particle ${10 + (i % 6) * 2}s linear ${i * 0.4}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-8 text-center" style={{ animation: 'fadeInContent 0.8s ease-out' }}>
+          <div
+            className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-light shadow-gold ring-4 ring-accent/40"
+            style={{ animation: 'scaleInBadge 0.8s ease-out, floatShake 4s ease-in-out 0.8s infinite' }}
+          >
+            <span className="text-5xl">🎬</span>
+          </div>
+
+          <div className="space-y-2" style={{ animation: 'slideInDown 0.8s ease-out 0.3s backwards' }}>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-brand-light tracking-tight">
+              Welcome back, <span className="text-gradient-gold">{profile.display_name}</span>
+            </h1>
+            <p className="text-brand-light/80">Where would you like to go today?</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
+            <button
+              onClick={() => setReelManagerView('chat')}
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
+            >
+              <span className="text-5xl transition-transform group-hover:scale-110">💬</span>
+              <span className="font-display text-lg font-semibold text-brand-light">Chats</span>
+              <span className="text-xs text-brand-light/70">Go to messages</span>
+            </button>
+            <button
+              onClick={() => setReelManagerView('reels')}
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
+            >
+              <span className="text-5xl transition-transform group-hover:scale-110">🎬</span>
+              <span className="font-display text-lg font-semibold text-accent-foreground">Reel Portal</span>
+              <span className="text-xs text-accent-foreground/80">Manage Instagram reels</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="text-sm text-brand-light/70 hover:text-brand-light transition-colors mt-2 underline-offset-4 hover:underline"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isReelManager && reelManagerView === 'reels') {
+    return <ReelManagerPortal onLogout={handleLogout} onBackToChoice={() => setReelManagerView(null)} />;
+  }
+
   const showChatArea = !isMobile || activeChat;
   const showSidebar = !isMobile || !activeChat;
 

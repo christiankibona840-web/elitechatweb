@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
@@ -8,13 +8,15 @@ import AdminPortal from '@/components/AdminPortal';
 import ReelManagerPortal from '@/components/ReelManagerPortal';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import ReelsPanel from '@/components/ReelsPanel';
+import TicTacToeBoard from '@/components/games/TicTacToeBoard';
+import IncomingGameInvite from '@/components/games/IncomingGameInvite';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
 
-const APP_VERSION = '2.24.12';
+const APP_VERSION = '2.25.0';
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
@@ -333,18 +335,29 @@ const Index = () => {
   }
 
   const showChatArea = !isMobile || activeChat;
-  const showSidebar = !isMobile || !activeChat;
+  const showSidebar = !isMobile || (!activeChat && !activeGameId);
+
+  // Listen for rematch events from inside the board
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { gameId?: string } | undefined;
+      if (detail?.gameId) setActiveGameId(detail.gameId);
+    };
+    window.addEventListener('open-game', handler);
+    return () => window.removeEventListener('open-game', handler);
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden">
       <AnnouncementBanner />
+      <IncomingGameInvite me={profile} onOpenGame={(id) => setActiveGameId(id)} />
       {showUpdateAlert && (
         <UpdateAlert
           version={APP_VERSION}
           onDismiss={() => setShowUpdateAlert(false)}
         />
       )}
-      {showSidebar && (
+      {showSidebar && !activeGameId && (
         <ChatSidebar
           me={profile}
           activeChat={activeChat}
@@ -352,17 +365,34 @@ const Index = () => {
           onLogout={handleLogout}
           refreshKey={refreshKey}
           onProfileUpdate={handleProfileUpdate}
+          onOpenGame={(id) => setActiveGameId(id)}
         />
       )}
-      {showChatArea && (
-        <ChatArea
-          me={profile}
-          activeChat={activeChat}
-          onMessagesChanged={handleMessagesChanged}
-          onBack={isMobile ? () => setActiveChat(null) : undefined}
-        />
+      {activeGameId ? (
+        <div className="flex-1 min-w-0">
+          <TicTacToeBoard
+            gameId={activeGameId}
+            me={profile}
+            onClose={() => setActiveGameId(null)}
+          />
+        </div>
+      ) : (
+        showChatArea && (
+          <ChatArea
+            me={profile}
+            activeChat={activeChat}
+            onMessagesChanged={handleMessagesChanged}
+            onBack={isMobile ? () => setActiveChat(null) : undefined}
+            onChallengeOpponent={(userId) => {
+              // Send invite immediately, opens via realtime when accepted
+              import('@/components/games/GameInviteModal');
+              setActiveChat({ type: 'dm', id: userId });
+              window.dispatchEvent(new CustomEvent('challenge-bestie', { detail: { userId } }));
+            }}
+          />
+        )
       )}
-      {!isMobile && <ReelsPanel />}
+      {!isMobile && !activeGameId && <ReelsPanel />}
     </div>
   );
 };

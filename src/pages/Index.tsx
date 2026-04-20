@@ -246,10 +246,10 @@ const Index = () => {
             <p className="text-brand-light/80">Where would you like to go today?</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-2" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
             <button
               onClick={() => setAdminView('chat')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">💬</span>
               <span className="font-display text-lg font-semibold text-brand-light">Chats</span>
@@ -257,7 +257,7 @@ const Index = () => {
             </button>
             <button
               onClick={() => setAdminView('admin')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">🛡️</span>
               <span className="font-display text-lg font-semibold text-accent-foreground">Admin Portal</span>
@@ -311,10 +311,10 @@ const Index = () => {
             <p className="text-brand-light/80">Where would you like to go today?</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-2" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
             <button
               onClick={() => setReelManagerView('chat')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">💬</span>
               <span className="font-display text-lg font-semibold text-brand-light">Chats</span>
@@ -322,7 +322,7 @@ const Index = () => {
             </button>
             <button
               onClick={() => setReelManagerView('reels')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">🎬</span>
               <span className="font-display text-lg font-semibold text-accent-foreground">Reel Portal</span>

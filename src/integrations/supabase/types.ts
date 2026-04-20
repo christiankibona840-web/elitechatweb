@@ -488,6 +488,30 @@ export type Database = {
           },
         ]
       }
+      reels: {
+        Row: {
+          added_by: string
+          created_at: string
+          id: string
+          position: number
+          url: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          id?: string
+          position?: number
+          url: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          position?: number
+          url?: string
+        }
+        Relationships: []
+      }
       starred_messages: {
         Row: {
           chat_id: string
@@ -643,7 +667,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "reel_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -771,7 +795,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "reel_manager"],
     },
   },
 } as const

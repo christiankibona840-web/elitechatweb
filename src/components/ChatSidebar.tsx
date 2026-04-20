@@ -8,8 +8,9 @@ import StatusPanel from './StatusPanel';
 import SettingsPanel from './SettingsPanel';
 import PeoplePanel from './PeoplePanel';
 import ProjectZone from './ProjectZone';
+import GamesPanel from './games/GamesPanel';
 import { LOVABLE_BOT_ID, LOVABLE_BOT_PROFILE } from '@/lib/lovableBot';
-import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket } from 'lucide-react';
+import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket, Gamepad2 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
@@ -21,6 +22,7 @@ interface ChatSidebarProps {
   onLogout: () => void;
   refreshKey: number;
   onProfileUpdate: (profile: Profile) => void;
+  onOpenGame?: (gameId: string) => void;
 }
 
 interface ConversationItem {
@@ -32,13 +34,13 @@ interface ConversationItem {
   unread: number;
 }
 
-const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onProfileUpdate }: ChatSidebarProps) => {
+const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onProfileUpdate, onOpenGame }: ChatSidebarProps) => {
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [tab, setTab] = useState<'chats' | 'status' | 'people' | 'settings' | 'projects'>('chats');
+  const [tab, setTab] = useState<'chats' | 'status' | 'people' | 'settings' | 'projects' | 'games'>('chats');
 
   useEffect(() => {
     loadConversations();
@@ -150,7 +152,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
     activeChat?.type === item.type && activeChat?.id === item.id;
 
   return (
-    <div className="w-full md:w-80 flex-shrink-0 border-r border-border bg-app-panel flex flex-col h-screen">
+    <div className="w-full md:w-80 lg:w-96 flex-shrink-0 border-r border-border bg-app-panel flex flex-col h-screen">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-app-header flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -174,19 +176,12 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border flex-shrink-0">
-        <button onClick={() => setTab('chats')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'chats' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
-          <MessageCircle size={13} /> Chats
-        </button>
-        <button onClick={() => setTab('people')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'people' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
-          <Globe size={13} /> People
-        </button>
-        <button onClick={() => setTab('status')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'status' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
-          <Camera size={13} /> Status
-        </button>
-        <button onClick={() => setTab('settings')} className={`flex-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${tab === 'settings' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}>
-          <Settings size={13} /> Settings
-        </button>
+      <div className="flex border-b border-border flex-shrink-0 overflow-x-auto no-scrollbar">
+        <TabButton active={tab === 'chats'} onClick={() => setTab('chats')} icon={<MessageCircle size={13} />} label="Chats" />
+        <TabButton active={tab === 'people'} onClick={() => setTab('people')} icon={<Globe size={13} />} label="People" />
+        <TabButton active={tab === 'games'} onClick={() => setTab('games')} icon={<Gamepad2 size={13} />} label="Games" />
+        <TabButton active={tab === 'status'} onClick={() => setTab('status')} icon={<Camera size={13} />} label="Status" />
+        <TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={<Settings size={13} />} label="Settings" />
       </div>
 
       {tab === 'status' ? (
@@ -197,6 +192,8 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
         <PeoplePanel me={me} onStartChat={(userId) => { setTab('chats'); onSelectChat({ type: 'dm', id: userId }); }} />
       ) : tab === 'projects' ? (
         <ProjectZone me={me} />
+      ) : tab === 'games' ? (
+        <GamesPanel me={me} onOpenGame={(id) => onOpenGame?.(id)} />
       ) : (
         <>
           {/* Search */}
@@ -280,5 +277,26 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
     </div>
   );
 };
+
+const TabButton = ({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 min-w-[60px] py-2.5 text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${
+      active ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'
+    }`}
+  >
+    {icon} {label}
+  </button>
+);
 
 export default ChatSidebar;

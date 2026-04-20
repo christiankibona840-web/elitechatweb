@@ -100,15 +100,17 @@ const TicTacToeBoard = ({ gameId, me, onClose }: TicTacToeBoardProps) => {
     const evalResult = evaluateBoard(newBoard);
     const nextTurn = mySymbol === 'X' ? 'O' : 'X';
 
-    const updates: Record<string, unknown> = {
+    const updates = {
       board: newBoard,
       current_turn: evalResult.winner ? game.current_turn : nextTurn,
       updated_at: new Date().toISOString(),
+      ...(evalResult.winner
+        ? {
+            status: 'finished',
+            winner: evalResult.winner === 'draw' ? 'draw' : evalResult.winner,
+          }
+        : {}),
     };
-    if (evalResult.winner) {
-      updates.status = 'finished';
-      updates.winner = evalResult.winner === 'draw' ? 'draw' : evalResult.winner;
-    }
 
     const { error } = await supabase.from('games').update(updates).eq('id', gameId);
     setSubmitting(false);

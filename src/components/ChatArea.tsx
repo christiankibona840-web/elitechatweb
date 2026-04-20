@@ -72,6 +72,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [showProfileView, setShowProfileView] = useState(false);
   const [botLoading, setBotLoading] = useState(false);
   const [editingMsg, setEditingMsg] = useState<{ id: string; content: string } | null>(null);
+  const [showGameInvite, setShowGameInvite] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

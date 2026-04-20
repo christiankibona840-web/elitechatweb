@@ -698,7 +698,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       )}
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
+      <div className={`flex-1 overflow-y-auto px-3 sm:px-[6%] md:px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
         {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}
         {messages.length === 0 && (
           <div className="text-center mt-10 text-muted-foreground text-sm">No messages yet — say hello! 👋</div>

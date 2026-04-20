@@ -30,7 +30,18 @@ const Index = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
   const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
+  const [activeGameId, setActiveGameId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Listen for rematch / challenge events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { gameId?: string } | undefined;
+      if (detail?.gameId) setActiveGameId(detail.gameId);
+    };
+    window.addEventListener('open-game', handler);
+    return () => window.removeEventListener('open-game', handler);
+  }, []);
 
   useEffect(() => {
     loadSavedTheme();
@@ -337,16 +348,6 @@ const Index = () => {
   const showChatArea = !isMobile || activeChat;
   const showSidebar = !isMobile || (!activeChat && !activeGameId);
 
-  // Listen for rematch events from inside the board
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { gameId?: string } | undefined;
-      if (detail?.gameId) setActiveGameId(detail.gameId);
-    };
-    window.addEventListener('open-game', handler);
-    return () => window.removeEventListener('open-game', handler);
-  }, []);
-
   return (
     <div className="flex h-screen overflow-hidden">
       <AnnouncementBanner />
@@ -383,12 +384,6 @@ const Index = () => {
             activeChat={activeChat}
             onMessagesChanged={handleMessagesChanged}
             onBack={isMobile ? () => setActiveChat(null) : undefined}
-            onChallengeOpponent={(userId) => {
-              // Send invite immediately, opens via realtime when accepted
-              import('@/components/games/GameInviteModal');
-              setActiveChat({ type: 'dm', id: userId });
-              window.dispatchEvent(new CustomEvent('challenge-bestie', { detail: { userId } }));
-            }}
           />
         )
       )}

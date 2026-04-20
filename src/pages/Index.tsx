@@ -5,6 +5,7 @@ import ChatSidebar from '@/components/ChatSidebar';
 import ChatArea from '@/components/ChatArea';
 import UpdateAlert from '@/components/UpdateAlert';
 import AdminPortal from '@/components/AdminPortal';
+import ReelManagerPortal from '@/components/ReelManagerPortal';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import ReelsPanel from '@/components/ReelsPanel';
 import { loadSavedTheme } from '@/components/SettingsPanel';
@@ -20,7 +21,9 @@ const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isReelManager, setIsReelManager] = useState(false);
   const [adminView, setAdminView] = useState<'chat' | 'admin' | null>(null);
+  const [reelManagerView, setReelManagerView] = useState<'chat' | 'reels' | null>(null);
   const [activeChat, setActiveChat] = useState<{ type: 'dm'; id: string } | { type: 'group'; id: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
@@ -131,13 +134,13 @@ const Index = () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
 
-    const { data: roleData } = await supabase
+    const { data: roleRows } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-    setIsAdmin(!!roleData);
+      .eq('user_id', userId);
+    const roles = (roleRows || []).map((r: any) => r.role);
+    setIsAdmin(roles.includes('admin'));
+    setIsReelManager(roles.includes('reel_manager'));
 
     setLoading(false);
 
@@ -164,7 +167,9 @@ const Index = () => {
     setProfile(null);
     setActiveChat(null);
     setIsAdmin(false);
+    setIsReelManager(false);
     setAdminView(null);
+    setReelManagerView(null);
   };
 
   const handleMessagesChanged = useCallback(() => {

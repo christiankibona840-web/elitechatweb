@@ -10,7 +10,8 @@ import MediaGallery from './MediaGallery';
 import StarredMessages from './StarredMessages';
 import SmartReply from './SmartReply';
 import ProfileViewModal from './ProfileViewModal';
-import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown } from 'lucide-react';
+import GameInviteModal from './games/GameInviteModal';
+import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown, Gamepad2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -71,6 +72,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [showProfileView, setShowProfileView] = useState(false);
   const [botLoading, setBotLoading] = useState(false);
   const [editingMsg, setEditingMsg] = useState<{ id: string; content: string } | null>(null);
+  const [showGameInvite, setShowGameInvite] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -607,6 +609,15 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         </div>
 
         <div className="flex items-center gap-0.5">
+          {!isBot && activeChat.type === 'dm' && contactProfile && (
+            <button
+              onClick={() => setShowGameInvite(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 hover:text-primary transition-colors"
+              title="Challenge to Tic Tac Toe"
+            >
+              <Gamepad2 size={18} />
+            </button>
+          )}
           <button onClick={() => { setShowSearch(!showSearch); setTimeout(() => searchInputRef.current?.focus(), 100); }}
             className="w-9 h-9 rounded-full flex items-center justify-center text-app-icon hover:bg-muted/30 transition-colors" title="Search messages">
             <Search size={18} />
@@ -636,6 +647,14 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
           </div>
         </div>
       </div>
+
+      {showGameInvite && contactProfile && (
+        <GameInviteModal
+          me={me}
+          preselectedContactId={contactProfile.id}
+          onClose={() => setShowGameInvite(false)}
+        />
+      )}
 
       {/* Search bar */}
       {showSearch && (
@@ -679,7 +698,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       )}
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
+      <div className={`flex-1 overflow-y-auto px-3 sm:px-[6%] md:px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
         {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}
         {messages.length === 0 && (
           <div className="text-center mt-10 text-muted-foreground text-sm">No messages yet — say hello! 👋</div>

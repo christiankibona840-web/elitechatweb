@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthScreen from '@/components/AuthScreen';
 import ChatSidebar from '@/components/ChatSidebar';
@@ -8,13 +8,15 @@ import AdminPortal from '@/components/AdminPortal';
 import ReelManagerPortal from '@/components/ReelManagerPortal';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import ReelsPanel from '@/components/ReelsPanel';
+import TicTacToeBoard from '@/components/games/TicTacToeBoard';
+import IncomingGameInvite from '@/components/games/IncomingGameInvite';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
 
-const APP_VERSION = '2.24.12';
+const APP_VERSION = '2.25.0';
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
@@ -28,7 +30,18 @@ const Index = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
   const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
+  const [activeGameId, setActiveGameId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Listen for rematch / challenge events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { gameId?: string } | undefined;
+      if (detail?.gameId) setActiveGameId(detail.gameId);
+    };
+    window.addEventListener('open-game', handler);
+    return () => window.removeEventListener('open-game', handler);
+  }, []);
 
   useEffect(() => {
     loadSavedTheme();
@@ -233,10 +246,10 @@ const Index = () => {
             <p className="text-brand-light/80">Where would you like to go today?</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-2" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
             <button
               onClick={() => setAdminView('chat')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">💬</span>
               <span className="font-display text-lg font-semibold text-brand-light">Chats</span>
@@ -244,7 +257,7 @@ const Index = () => {
             </button>
             <button
               onClick={() => setAdminView('admin')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">🛡️</span>
               <span className="font-display text-lg font-semibold text-accent-foreground">Admin Portal</span>
@@ -298,10 +311,10 @@ const Index = () => {
             <p className="text-brand-light/80">Where would you like to go today?</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-2" style={{ animation: 'bounceIn 0.8s ease-out 0.6s backwards' }}>
             <button
               onClick={() => setReelManagerView('chat')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-brand-light/10 hover:bg-brand-light/20 border border-brand-light/30 backdrop-blur-md transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 hover:shadow-elegant"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">💬</span>
               <span className="font-display text-lg font-semibold text-brand-light">Chats</span>
@@ -309,7 +322,7 @@ const Index = () => {
             </button>
             <button
               onClick={() => setReelManagerView('reels')}
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-gradient-gold border border-accent/50 transition-all duration-300 sm:min-w-[180px] hover:-translate-y-1 shadow-gold hover:shadow-gold-strong"
             >
               <span className="text-5xl transition-transform group-hover:scale-110">🎬</span>
               <span className="font-display text-lg font-semibold text-accent-foreground">Reel Portal</span>
@@ -333,18 +346,19 @@ const Index = () => {
   }
 
   const showChatArea = !isMobile || activeChat;
-  const showSidebar = !isMobile || !activeChat;
+  const showSidebar = !isMobile || (!activeChat && !activeGameId);
 
   return (
     <div className="flex h-screen overflow-hidden">
       <AnnouncementBanner />
+      <IncomingGameInvite me={profile} onOpenGame={(id) => setActiveGameId(id)} />
       {showUpdateAlert && (
         <UpdateAlert
           version={APP_VERSION}
           onDismiss={() => setShowUpdateAlert(false)}
         />
       )}
-      {showSidebar && (
+      {showSidebar && !activeGameId && (
         <ChatSidebar
           me={profile}
           activeChat={activeChat}
@@ -352,17 +366,28 @@ const Index = () => {
           onLogout={handleLogout}
           refreshKey={refreshKey}
           onProfileUpdate={handleProfileUpdate}
+          onOpenGame={(id) => setActiveGameId(id)}
         />
       )}
-      {showChatArea && (
-        <ChatArea
-          me={profile}
-          activeChat={activeChat}
-          onMessagesChanged={handleMessagesChanged}
-          onBack={isMobile ? () => setActiveChat(null) : undefined}
-        />
+      {activeGameId ? (
+        <div className="flex-1 min-w-0">
+          <TicTacToeBoard
+            gameId={activeGameId}
+            me={profile}
+            onClose={() => setActiveGameId(null)}
+          />
+        </div>
+      ) : (
+        showChatArea && (
+          <ChatArea
+            me={profile}
+            activeChat={activeChat}
+            onMessagesChanged={handleMessagesChanged}
+            onBack={isMobile ? () => setActiveChat(null) : undefined}
+          />
+        )
       )}
-      {!isMobile && <ReelsPanel />}
+      {!isMobile && !activeGameId && <ReelsPanel />}
     </div>
   );
 };

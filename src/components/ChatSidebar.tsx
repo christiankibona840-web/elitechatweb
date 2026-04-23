@@ -5,6 +5,7 @@ import Avatar from './Avatar';
 import UserSearchModal from './UserSearchModal';
 import CreateGroupModal from './CreateGroupModal';
 import StatusPanel from './StatusPanel';
+import StoryTray from './StoryTray';
 import SettingsPanel from './SettingsPanel';
 import PeoplePanel from './PeoplePanel';
 import ProjectZone from './ProjectZone';
@@ -22,7 +23,7 @@ interface ChatSidebarProps {
   onLogout: () => void;
   refreshKey: number;
   onProfileUpdate: (profile: Profile) => void;
-  onOpenGame?: (gameId: string) => void;
+  onOpenGame?: (gameId: string, gameType?: 'ttt' | 'c4') => void;
 }
 
 interface ConversationItem {
@@ -193,9 +194,12 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
       ) : tab === 'projects' ? (
         <ProjectZone me={me} />
       ) : tab === 'games' ? (
-        <GamesPanel me={me} onOpenGame={(id) => onOpenGame?.(id)} />
+        <GamesPanel me={me} onOpenGame={(id, type) => onOpenGame?.(id, type)} />
       ) : (
         <>
+          {/* Stories tray (IG-style) */}
+          <StoryTray me={me} />
+
           {/* Search */}
           <div className="px-3 py-2 flex-shrink-0">
             <div className="flex items-center gap-2 bg-app-input-bg rounded-3xl px-3.5 py-1.5">

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Avatar from './Avatar';
-import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon } from 'lucide-react';
+import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -90,7 +90,15 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
   const [saveOnline, setSaveOnline] = useState(true);
   const [bubbleRadius, setBubbleRadius] = useState(() => localStorage.getItem('bubble-radius') || 'lg');
   const [activeWallpaper, setActiveWallpaper] = useState(() => localStorage.getItem('chat-wallpaper') || '');
+  const [reelsHidden, setReelsHidden] = useState(() => localStorage.getItem('reels-panel-hidden') === '1');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const toggleReels = (next: boolean) => {
+    setReelsHidden(next);
+    localStorage.setItem('reels-panel-hidden', next ? '1' : '0');
+    window.dispatchEvent(new Event('reels-panel-toggle'));
+    toast.success(next ? 'Reels panel hidden' : 'Reels panel shown');
+  };
 
   const updateProfile = async () => {
     setSaving(true);
@@ -178,6 +186,26 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
         </div>
         <input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={e => { if (e.target.files?.[0]) uploadAvatar(e.target.files[0]); }} />
         <p className="text-xs text-muted-foreground mt-2">Tap to change photo</p>
+      </div>
+
+      {/* Reels panel toggle */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Instagram size={16} className="text-pink-500" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Instagram Reels Panel</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Show the reels sidebar on desktop</p>
+            </div>
+          </div>
+          <button
+            onClick={() => toggleReels(!reelsHidden)}
+            className={`relative h-6 w-11 rounded-full transition-colors ${reelsHidden ? 'bg-muted' : 'bg-primary'}`}
+            aria-label="Toggle reels panel"
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${reelsHidden ? 'translate-x-0.5' : 'translate-x-[22px]'}`} />
+          </button>
+        </div>
       </div>
 
       {/* Profile Info */}

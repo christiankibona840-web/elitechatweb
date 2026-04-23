@@ -68,6 +68,42 @@ export type Database = {
         }
         Relationships: []
       }
+      c4_games: {
+        Row: {
+          board: string[]
+          created_at: string
+          current_turn: string
+          id: string
+          player_red: string
+          player_yellow: string
+          status: string
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          board?: string[]
+          created_at?: string
+          current_turn?: string
+          id?: string
+          player_red: string
+          player_yellow: string
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          board?: string[]
+          created_at?: string
+          current_turn?: string
+          id?: string
+          player_red?: string
+          player_yellow?: string
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           contact_id: string
@@ -139,6 +175,7 @@ export type Database = {
           created_at: string
           from_user: string
           game_id: string | null
+          game_type: string
           id: string
           status: string
           to_user: string
@@ -148,6 +185,7 @@ export type Database = {
           created_at?: string
           from_user: string
           game_id?: string | null
+          game_type?: string
           id?: string
           status?: string
           to_user: string
@@ -157,6 +195,7 @@ export type Database = {
           created_at?: string
           from_user?: string
           game_id?: string | null
+          game_type?: string
           id?: string
           status?: string
           to_user?: string

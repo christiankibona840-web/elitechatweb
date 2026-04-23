@@ -9,14 +9,17 @@ type Profile = Tables<'profiles'>;
 
 interface IncomingGameInviteProps {
   me: Profile;
-  onOpenGame: (gameId: string) => void;
+  onOpenGame: (gameId: string, gameType?: 'ttt' | 'c4') => void;
 }
 
 interface PendingInvite {
   id: string;
   from_user: string;
+  game_type?: string;
   fromProfile?: Profile | null;
 }
+
+const labelFor = (t?: string) => (t === 'c4' ? '🔴 Connect 4' : '⭕ Tic Tac Toe');
 
 const IncomingGameInvite = ({ me, onOpenGame }: IncomingGameInviteProps) => {
   const [invites, setInvites] = useState<PendingInvite[]>([]);
@@ -24,12 +27,11 @@ const IncomingGameInvite = ({ me, onOpenGame }: IncomingGameInviteProps) => {
   const load = async () => {
     const { data } = await supabase
       .from('game_invites')
-      .select('id, from_user')
+      .select('id, from_user, game_type')
       .eq('to_user', me.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
     const list = (data || []) as PendingInvite[];
-    // hydrate from-profile
     if (list.length > 0) {
       const ids = [...new Set(list.map(i => i.from_user))];
       const { data: profs } = await supabase.from('profiles').select('*').in('id', ids);
@@ -41,66 +43,66 @@ const IncomingGameInvite = ({ me, onOpenGame }: IncomingGameInviteProps) => {
 
   useEffect(() => {
     load();
-
-    // Listen for accepted invites where I'm the inviter — auto-open the game
     const channel = supabase
       .channel(`game-invites-${me.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'game_invites', filter: `to_user=eq.${me.id}` },
-        () => load(),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'game_invites', filter: `to_user=eq.${me.id}` },
-        () => load(),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'game_invites', filter: `from_user=eq.${me.id}` },
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_invites', filter: `to_user=eq.${me.id}` }, () => load())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_invites', filter: `to_user=eq.${me.id}` }, () => load())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_invites', filter: `from_user=eq.${me.id}` },
         (payload) => {
-          const inv = payload.new as { status: string; game_id: string | null };
+          const inv = payload.new as { status: string; game_id: string | null; game_type?: string };
           if (inv.status === 'accepted' && inv.game_id) {
             toast.success('Your challenge was accepted! 🎮');
-            onOpenGame(inv.game_id);
+            onOpenGame(inv.game_id, (inv.game_type as 'ttt' | 'c4') || 'ttt');
           } else if (inv.status === 'declined') {
             toast.info('Your challenge was declined');
           }
         },
       )
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me.id]);
 
   const accept = async (invite: PendingInvite) => {
     if (!invite.fromProfile) return;
-    // Create the game; inviter is X, accepter is O
-    const { data: game, error: gameErr } = await supabase
-      .from('games')
-      .insert({
-        player_x: invite.from_user,
-        player_o: me.id,
-        current_turn: 'X',
-        status: 'active',
-        board: ['', '', '', '', '', '', '', '', ''],
-      })
-      .select('id')
-      .single();
-    if (gameErr || !game) {
-      toast.error('Could not start the game');
-      console.error(gameErr);
-      return;
+    const isC4 = invite.game_type === 'c4';
+    let gameId: string | null = null;
+
+    if (isC4) {
+      const { data: game, error } = await (supabase as any)
+        .from('c4_games')
+        .insert({
+          player_red: invite.from_user,
+          player_yellow: me.id,
+          current_turn: 'R',
+          status: 'active',
+        })
+        .select('id')
+        .single();
+      if (error || !game) { toast.error('Could not start the game'); console.error(error); return; }
+      gameId = game.id;
+    } else {
+      const { data: game, error } = await supabase
+        .from('games')
+        .insert({
+          player_x: invite.from_user,
+          player_o: me.id,
+          current_turn: 'X',
+          status: 'active',
+          board: ['', '', '', '', '', '', '', '', ''],
+        })
+        .select('id')
+        .single();
+      if (error || !game) { toast.error('Could not start the game'); console.error(error); return; }
+      gameId = game.id;
     }
+
     await supabase
       .from('game_invites')
-      .update({ status: 'accepted', game_id: game.id })
+      .update({ status: 'accepted', game_id: gameId } as any)
       .eq('id', invite.id);
     setInvites(prev => prev.filter(i => i.id !== invite.id));
-    onOpenGame(game.id);
+    onOpenGame(gameId!, isC4 ? 'c4' : 'ttt');
   };
 
   const decline = async (invite: PendingInvite) => {
@@ -131,21 +133,13 @@ const IncomingGameInvite = ({ me, onOpenGame }: IncomingGameInviteProps) => {
             <div className="text-sm font-semibold text-foreground truncate">
               {inv.fromProfile?.display_name || 'Someone'}
             </div>
-            <div className="text-xs text-muted-foreground">wants to play Tic Tac Toe</div>
+            <div className="text-xs text-muted-foreground truncate">wants to play {labelFor(inv.game_type)}</div>
           </div>
           <div className="flex gap-1.5 flex-shrink-0">
-            <button
-              onClick={() => decline(inv)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
-              aria-label="Decline"
-            >
+            <button onClick={() => decline(inv)} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors" aria-label="Decline">
               <X size={16} />
             </button>
-            <button
-              onClick={() => accept(inv)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              aria-label="Accept"
-            >
+            <button onClick={() => accept(inv)} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" aria-label="Accept">
               <Check size={16} />
             </button>
           </div>

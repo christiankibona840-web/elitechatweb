@@ -9,6 +9,7 @@ import ReelManagerPortal from '@/components/ReelManagerPortal';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import ReelsPanel from '@/components/ReelsPanel';
 import TicTacToeBoard from '@/components/games/TicTacToeBoard';
+import Connect4Board from '@/components/games/Connect4Board';
 import IncomingGameInvite from '@/components/games/IncomingGameInvite';
 import { loadSavedTheme } from '@/components/SettingsPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,17 +32,23 @@ const Index = () => {
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
   const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
   const [activeGameId, setActiveGameId] = useState<string | null>(null);
+  const [activeGameType, setActiveGameType] = useState<'ttt' | 'c4'>('ttt');
   const isMobile = useIsMobile();
+
+  const openGame = useCallback((gameId: string, gameType: 'ttt' | 'c4' = 'ttt') => {
+    setActiveGameType(gameType);
+    setActiveGameId(gameId);
+  }, []);
 
   // Listen for rematch / challenge events
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { gameId?: string } | undefined;
-      if (detail?.gameId) setActiveGameId(detail.gameId);
+      const detail = (e as CustomEvent).detail as { gameId?: string; gameType?: 'ttt' | 'c4' } | undefined;
+      if (detail?.gameId) openGame(detail.gameId, detail.gameType || 'ttt');
     };
     window.addEventListener('open-game', handler);
     return () => window.removeEventListener('open-game', handler);
-  }, []);
+  }, [openGame]);
 
   useEffect(() => {
     loadSavedTheme();
@@ -351,7 +358,7 @@ const Index = () => {
   return (
     <div className="flex h-screen overflow-hidden">
       <AnnouncementBanner />
-      <IncomingGameInvite me={profile} onOpenGame={(id) => setActiveGameId(id)} />
+      <IncomingGameInvite me={profile} onOpenGame={openGame} />
       {showUpdateAlert && (
         <UpdateAlert
           version={APP_VERSION}
@@ -366,16 +373,24 @@ const Index = () => {
           onLogout={handleLogout}
           refreshKey={refreshKey}
           onProfileUpdate={handleProfileUpdate}
-          onOpenGame={(id) => setActiveGameId(id)}
+          onOpenGame={openGame}
         />
       )}
       {activeGameId ? (
         <div className="flex-1 min-w-0">
-          <TicTacToeBoard
-            gameId={activeGameId}
-            me={profile}
-            onClose={() => setActiveGameId(null)}
-          />
+          {activeGameType === 'c4' ? (
+            <Connect4Board
+              gameId={activeGameId}
+              me={profile}
+              onClose={() => setActiveGameId(null)}
+            />
+          ) : (
+            <TicTacToeBoard
+              gameId={activeGameId}
+              me={profile}
+              onClose={() => setActiveGameId(null)}
+            />
+          )}
         </div>
       ) : (
         showChatArea && (

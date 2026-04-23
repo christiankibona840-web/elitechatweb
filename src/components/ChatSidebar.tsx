@@ -5,6 +5,7 @@ import Avatar from './Avatar';
 import UserSearchModal from './UserSearchModal';
 import CreateGroupModal from './CreateGroupModal';
 import StatusPanel from './StatusPanel';
+import StoryTray from './StoryTray';
 import SettingsPanel from './SettingsPanel';
 import PeoplePanel from './PeoplePanel';
 import ProjectZone from './ProjectZone';
@@ -22,7 +23,7 @@ interface ChatSidebarProps {
   onLogout: () => void;
   refreshKey: number;
   onProfileUpdate: (profile: Profile) => void;
-  onOpenGame?: (gameId: string) => void;
+  onOpenGame?: (gameId: string, gameType?: 'ttt' | 'c4') => void;
 }
 
 interface ConversationItem {

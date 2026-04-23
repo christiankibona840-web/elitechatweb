@@ -6,19 +6,27 @@ import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
+export type GameType = 'ttt' | 'c4';
 
 interface GameInviteModalProps {
   me: Profile;
   preselectedContactId?: string | null;
+  gameType?: GameType;
   onClose: () => void;
   onInvited?: (toUserId: string) => void;
 }
 
-const GameInviteModal = ({ me, preselectedContactId, onClose, onInvited }: GameInviteModalProps) => {
+const GAME_LABELS: Record<GameType, { name: string; emoji: string }> = {
+  ttt: { name: 'Tic Tac Toe', emoji: '⭕' },
+  c4: { name: 'Connect 4', emoji: '🔴' },
+};
+
+const GameInviteModal = ({ me, preselectedContactId, gameType: initialType, onClose, onInvited }: GameInviteModalProps) => {
   const [contacts, setContacts] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [gameType, setGameType] = useState<GameType>(initialType || 'ttt');
 
   useEffect(() => {
     const load = async () => {
@@ -32,7 +40,6 @@ const GameInviteModal = ({ me, preselectedContactId, onClose, onInvited }: GameI
       setContacts(list);
       setLoading(false);
 
-      // If preselected, send right away
       if (preselectedContactId && list.some(c => c.id === preselectedContactId)) {
         sendInvite(preselectedContactId);
       }
@@ -43,7 +50,6 @@ const GameInviteModal = ({ me, preselectedContactId, onClose, onInvited }: GameI
 
   const sendInvite = async (toUserId: string) => {
     setSendingTo(toUserId);
-    // Cancel any of my own previous pending invites to this user
     await supabase
       .from('game_invites')
       .update({ status: 'cancelled' })
@@ -55,14 +61,15 @@ const GameInviteModal = ({ me, preselectedContactId, onClose, onInvited }: GameI
       from_user: me.id,
       to_user: toUserId,
       status: 'pending',
-    });
+      game_type: gameType,
+    } as any);
     setSendingTo(null);
     if (error) {
       toast.error('Could not send invite');
       console.error(error);
       return;
     }
-    toast.success('Game invite sent! 🎮');
+    toast.success(`${GAME_LABELS[gameType].emoji} ${GAME_LABELS[gameType].name} invite sent!`);
     onInvited?.(toUserId);
     onClose();
   };
@@ -83,6 +90,21 @@ const GameInviteModal = ({ me, preselectedContactId, onClose, onInvited }: GameI
           <button onClick={onClose} className="text-app-icon hover:text-foreground">
             <X size={20} />
           </button>
+        </div>
+
+        {/* Game type picker */}
+        <div className="px-4 py-3 border-b border-border flex gap-2">
+          {(Object.keys(GAME_LABELS) as GameType[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setGameType(t)}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-colors ${
+                gameType === t ? 'bg-primary text-primary-foreground' : 'bg-app-input-bg text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>{GAME_LABELS[t].emoji}</span> {GAME_LABELS[t].name}
+            </button>
+          ))}
         </div>
 
         <div className="px-4 py-3 border-b border-border">

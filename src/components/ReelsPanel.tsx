@@ -82,8 +82,8 @@ const ReelsPanel = () => {
           {reels.map((r) => (
             <div
               key={r.id}
-              className="snap-start snap-always w-full h-full flex items-center justify-center bg-black"
-              style={{ height: '100%', minHeight: '100%' }}
+              className="snap-start snap-always w-full flex items-center justify-center bg-black"
+              style={{ height: 'calc(100vh - 53px)' }}
             >
               <iframe
                 src={`${r.url}embed`}

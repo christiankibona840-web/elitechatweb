@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Avatar from './Avatar';
-import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon } from 'lucide-react';
+import { Camera, Save, Key, User, Palette, Circle, Image as ImageIcon, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -90,7 +90,15 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
   const [saveOnline, setSaveOnline] = useState(true);
   const [bubbleRadius, setBubbleRadius] = useState(() => localStorage.getItem('bubble-radius') || 'lg');
   const [activeWallpaper, setActiveWallpaper] = useState(() => localStorage.getItem('chat-wallpaper') || '');
+  const [reelsHidden, setReelsHidden] = useState(() => localStorage.getItem('reels-panel-hidden') === '1');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const toggleReels = (next: boolean) => {
+    setReelsHidden(next);
+    localStorage.setItem('reels-panel-hidden', next ? '1' : '0');
+    window.dispatchEvent(new Event('reels-panel-toggle'));
+    toast.success(next ? 'Reels panel hidden' : 'Reels panel shown');
+  };
 
   const updateProfile = async () => {
     setSaving(true);

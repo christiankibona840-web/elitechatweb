@@ -188,6 +188,26 @@ const SettingsPanel = ({ me, onProfileUpdate }: SettingsPanelProps) => {
         <p className="text-xs text-muted-foreground mt-2">Tap to change photo</p>
       </div>
 
+      {/* Reels panel toggle */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Instagram size={16} className="text-pink-500" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Instagram Reels Panel</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Show the reels sidebar on desktop</p>
+            </div>
+          </div>
+          <button
+            onClick={() => toggleReels(!reelsHidden)}
+            className={`relative h-6 w-11 rounded-full transition-colors ${reelsHidden ? 'bg-muted' : 'bg-primary'}`}
+            aria-label="Toggle reels panel"
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${reelsHidden ? 'translate-x-0.5' : 'translate-x-[22px]'}`} />
+          </button>
+        </div>
+      </div>
+
       {/* Profile Info */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 mb-3">

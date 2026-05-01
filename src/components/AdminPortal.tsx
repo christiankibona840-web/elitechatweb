@@ -513,9 +513,10 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
                   <th className="text-left px-4 py-3 font-medium">User</th>
+                  <th className="text-left px-4 py-3 font-medium">Member ID</th>
                   <th className="text-left px-4 py-3 font-medium">Email</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 font-medium">Last Seen</th>
+                  <th className="text-left px-4 py-3 font-medium">Groups</th>
                   <th className="text-left px-4 py-3 font-medium">Joined</th>
                   <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
@@ -523,11 +524,11 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">Loading users...</td>
+                    <td colSpan={7} className="text-center py-12 text-muted-foreground">Loading users...</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
                       {tab === 'blocked' ? 'No blocked users' : 'No users found'}
                     </td>
                   </tr>
@@ -557,6 +558,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                             <p className="text-xs text-muted-foreground">@{user.username}</p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {user.member_id ? (
+                          <span className="font-mono text-xs px-2 py-0.5 rounded bg-accent/15 text-accent">{user.member_id}</span>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                        {user.disabled && <span className="ml-1.5 text-[10px] text-destructive">disabled</span>}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                       <td className="px-4 py-3">

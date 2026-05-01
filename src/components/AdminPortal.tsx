@@ -580,7 +580,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{formatLastSeen(user.last_seen)}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{user.community_count} group{user.community_count !== 1 ? 's' : ''}</td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(user.created_at)}</td>
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
@@ -615,6 +615,43 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
         </>
         )}
       </div>
+
+      {/* Force-delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} className="text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">Permanently delete user?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Are you sure you want to permanently delete <span className="text-foreground font-medium">{confirmDelete.display_name}</span> (@{confirmDelete.username})?
+                  This will remove them from all community groups, delete all their content, and disable their Member ID. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => setConfirmDelete(null)} disabled={deleting === confirmDelete.id}
+                className="px-4 py-2 text-sm rounded-lg hover:bg-muted disabled:opacity-50">Cancel</button>
+              <button onClick={() => deleteUser(confirmDelete)} disabled={deleting === confirmDelete.id}
+                className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-50 font-medium">
+                {deleting === confirmDelete.id ? 'Deleting...' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User communities modal */}
+      {communitiesFor && (
+        <UserCommunitiesModal
+          userId={communitiesFor.id}
+          username={communitiesFor.username}
+          onClose={() => { setCommunitiesFor(null); loadUsers(); }}
+        />
+      )}
     </div>
   );
 };

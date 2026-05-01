@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle, Megaphone } from 'lucide-react';
+import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, MessageCircle, Megaphone, Hash, Users2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import ApprovedIdsPanel from './admin/ApprovedIdsPanel';
+import GroupsPanel from './admin/GroupsPanel';
+import UserCommunitiesModal from './admin/UserCommunitiesModal';
 
 interface AdminUser {
   id: string;
@@ -12,6 +15,9 @@ interface AdminUser {
   created_at: string;
   is_online: boolean;
   last_seen: string;
+  member_id: string | null;
+  disabled: boolean;
+  community_count: number;
 }
 
 interface AdminPortalProps {
@@ -30,13 +36,15 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements'>('users');
+  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements' | 'approved-ids' | 'groups'>('users');
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementContent, setAnnouncementContent] = useState('');
   const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [newUsername, setNewUsername] = useState('');
   const [assigningId, setAssigningId] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [communitiesFor, setCommunitiesFor] = useState<AdminUser | null>(null);
 
   const validateUsername = (u: string): string | null => {
     if (u.length < 3 || u.length > 20) return 'Must be 3-20 characters';
@@ -148,17 +156,18 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
     }
   };
 
-  const deleteUser = async (userId: string, displayName: string) => {
-    if (!confirm(`Are you sure you want to delete user "${displayName}"? This cannot be undone.`)) return;
-    setDeleting(userId);
-    const { error } = await supabase.rpc('admin_delete_user', { _target_user_id: userId });
+  const deleteUser = async (user: AdminUser) => {
+    setDeleting(user.id);
+    const { error } = await supabase.rpc('admin_force_delete_user', { _target_user_id: user.id });
     if (error) {
       toast({ title: 'Error deleting user', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'User deleted', description: `${displayName} has been removed.` });
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      toast({ title: 'User deleted', description: `User ${user.display_name} has been permanently deleted.` });
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      if (selectedUser?.id === user.id) setSelectedUser(null);
     }
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const blockUser = async (userId: string, displayName: string) => {

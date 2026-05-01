@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          details: Json | null
+          id: string
+          performed_at: string
+          target_id_code: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          details?: Json | null
+          id?: string
+          performed_at?: string
+          target_id_code?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          details?: Json | null
+          id?: string
+          performed_at?: string
+          target_id_code?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           admin_avatar: string | null
@@ -41,6 +71,39 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
+        }
+        Relationships: []
+      }
+      approved_ids: {
+        Row: {
+          claimed_at: string | null
+          claimed_by_user_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: string
+          status: Database["public"]["Enums"]["approved_id_status"]
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: string
+          status?: Database["public"]["Enums"]["approved_id_status"]
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string
+          status?: Database["public"]["Enums"]["approved_id_status"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -343,6 +406,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          ownerless: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -351,6 +415,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          ownerless?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -359,6 +424,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          ownerless?: boolean
         }
         Relationships: [
           {
@@ -472,11 +538,13 @@ export type Database = {
           bubble_radius: string | null
           chat_theme: Json | null
           created_at: string | null
+          disabled: boolean
           display_name: string
           gender: string | null
           id: string
           is_online: boolean | null
           last_seen: string | null
+          member_id: string | null
           readable_id: string | null
           user_number: number
           username: string
@@ -487,11 +555,13 @@ export type Database = {
           bubble_radius?: string | null
           chat_theme?: Json | null
           created_at?: string | null
+          disabled?: boolean
           display_name: string
           gender?: string | null
           id: string
           is_online?: boolean | null
           last_seen?: string | null
+          member_id?: string | null
           readable_id?: string | null
           user_number?: number
           username: string
@@ -502,11 +572,13 @@ export type Database = {
           bubble_radius?: string | null
           chat_theme?: Json | null
           created_at?: string | null
+          disabled?: boolean
           display_name?: string
           gender?: string | null
           id?: string
           is_online?: boolean | null
           last_seen?: string | null
+          member_id?: string | null
           readable_id?: string | null
           user_number?: number
           username?: string
@@ -762,6 +834,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_add_approved_ids: {
+        Args: { _member_ids: string[] }
+        Returns: {
+          member_id: string
+          message: string
+          success: boolean
+        }[]
+      }
       admin_assign_username: {
         Args: { _new_username: string; _target_user_id: string }
         Returns: undefined
@@ -770,19 +850,78 @@ export type Database = {
         Args: { _target_user_id: string }
         Returns: undefined
       }
-      admin_list_users: {
+      admin_force_delete_user: {
+        Args: { _target_user_id: string }
+        Returns: undefined
+      }
+      admin_generate_approved_ids: {
+        Args: { _count: number; _prefix: string; _start: number }
+        Returns: number
+      }
+      admin_list_all_groups: {
         Args: never
         Returns: {
           avatar_url: string
           created_at: string
+          created_by: string
+          description: string
+          id: string
+          member_count: number
+          name: string
+          owner_username: string
+          ownerless: boolean
+        }[]
+      }
+      admin_list_group_members: {
+        Args: { _group_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          is_owner: boolean
+          joined_at: string
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
+      admin_list_user_groups: {
+        Args: { _target_user_id: string }
+        Returns: {
+          group_id: string
+          is_owner: boolean
+          member_count: number
+          name: string
+          role: string
+        }[]
+      }
+      admin_list_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          community_count: number
+          created_at: string
+          disabled: boolean
           display_name: string
           email: string
           id: string
           is_online: boolean
           last_seen: string
+          member_id: string
           username: string
         }[]
       }
+      admin_remove_from_group: {
+        Args: { _group_id: string; _target_user_id: string }
+        Returns: undefined
+      }
+      admin_set_approved_id_status: {
+        Args: {
+          _member_id: string
+          _status: Database["public"]["Enums"]["approved_id_status"]
+        }
+        Returns: undefined
+      }
+      check_member_id: { Args: { _member_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -798,6 +937,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "reel_manager"
+      approved_id_status: "available" | "claimed" | "disabled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -926,6 +1066,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "reel_manager"],
+      approved_id_status: ["available", "claimed", "disabled"],
     },
   },
 } as const

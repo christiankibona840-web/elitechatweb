@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, Eye, MessageCircle, Megaphone } from 'lucide-react';
+import { Trash2, LogOut, Shield, Users, Search, KeyRound, Ban, CheckCircle, MessageCircle, Megaphone, Hash, Users2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import ApprovedIdsPanel from './admin/ApprovedIdsPanel';
+import GroupsPanel from './admin/GroupsPanel';
+import UserCommunitiesModal from './admin/UserCommunitiesModal';
 
 interface AdminUser {
   id: string;
@@ -12,6 +15,9 @@ interface AdminUser {
   created_at: string;
   is_online: boolean;
   last_seen: string;
+  member_id: string | null;
+  disabled: boolean;
+  community_count: number;
 }
 
 interface AdminPortalProps {
@@ -30,13 +36,15 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements'>('users');
+  const [tab, setTab] = useState<'users' | 'blocked' | 'announcements' | 'approved-ids' | 'groups'>('users');
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementContent, setAnnouncementContent] = useState('');
   const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [newUsername, setNewUsername] = useState('');
   const [assigningId, setAssigningId] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [communitiesFor, setCommunitiesFor] = useState<AdminUser | null>(null);
 
   const validateUsername = (u: string): string | null => {
     if (u.length < 3 || u.length > 20) return 'Must be 3-20 characters';
@@ -148,17 +156,18 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
     }
   };
 
-  const deleteUser = async (userId: string, displayName: string) => {
-    if (!confirm(`Are you sure you want to delete user "${displayName}"? This cannot be undone.`)) return;
-    setDeleting(userId);
-    const { error } = await supabase.rpc('admin_delete_user', { _target_user_id: userId });
+  const deleteUser = async (user: AdminUser) => {
+    setDeleting(user.id);
+    const { error } = await supabase.rpc('admin_force_delete_user', { _target_user_id: user.id });
     if (error) {
       toast({ title: 'Error deleting user', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'User deleted', description: `${displayName} has been removed.` });
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      toast({ title: 'User deleted', description: `User ${user.display_name} has been permanently deleted.` });
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      if (selectedUser?.id === user.id) setSelectedUser(null);
     }
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const blockUser = async (userId: string, displayName: string) => {
@@ -331,10 +340,18 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4">
+        <div className="flex gap-1 mb-4 flex-wrap">
           <button onClick={() => setTab('users')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
             <Users size={14} className="inline mr-1.5" /> All Users
+          </button>
+          <button onClick={() => setTab('approved-ids')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'approved-ids' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Hash size={14} className="inline mr-1.5" /> Approved IDs
+          </button>
+          <button onClick={() => setTab('groups')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'groups' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Users2 size={14} className="inline mr-1.5" /> Groups
           </button>
           <button onClick={() => setTab('blocked')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'blocked' ? 'bg-destructive text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
@@ -346,7 +363,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
           </button>
         </div>
 
-        {tab === 'announcements' ? (
+        {tab === 'approved-ids' ? <ApprovedIdsPanel /> : tab === 'groups' ? <GroupsPanel /> : tab === 'announcements' ? (
           <div className="space-y-4">
             <div className="bg-card border border-border rounded-xl p-5">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -451,10 +468,14 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   <Ban size={16} /> Block User
                 </button>
               )}
-              <button onClick={() => deleteUser(selectedUser.id, selectedUser.display_name)}
+              <button onClick={() => setCommunitiesFor(selectedUser)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm">
+                <Users2 size={16} /> View Communities ({selectedUser.community_count})
+              </button>
+              <button onClick={() => setConfirmDelete(selectedUser)}
                 disabled={deleting === selectedUser.id}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-sm disabled:opacity-50">
-                <Trash2 size={16} /> Delete Account
+                <Trash2 size={16} /> Delete Permanently
               </button>
             </div>
 
@@ -492,9 +513,10 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
                   <th className="text-left px-4 py-3 font-medium">User</th>
+                  <th className="text-left px-4 py-3 font-medium">Member ID</th>
                   <th className="text-left px-4 py-3 font-medium">Email</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 font-medium">Last Seen</th>
+                  <th className="text-left px-4 py-3 font-medium">Groups</th>
                   <th className="text-left px-4 py-3 font-medium">Joined</th>
                   <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
@@ -502,11 +524,11 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">Loading users...</td>
+                    <td colSpan={7} className="text-center py-12 text-muted-foreground">Loading users...</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
                       {tab === 'blocked' ? 'No blocked users' : 'No users found'}
                     </td>
                   </tr>
@@ -537,6 +559,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           </div>
                         </div>
                       </td>
+                      <td className="px-4 py-3">
+                        {user.member_id ? (
+                          <span className="font-mono text-xs px-2 py-0.5 rounded bg-accent/15 text-accent">{user.member_id}</span>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                        {user.disabled && <span className="ml-1.5 text-[10px] text-destructive">disabled</span>}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                       <td className="px-4 py-3">
                         {blockedIds.has(user.id) ? (
@@ -552,7 +580,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{formatLastSeen(user.last_seen)}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{user.community_count} group{user.community_count !== 1 ? 's' : ''}</td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(user.created_at)}</td>
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
@@ -567,7 +595,11 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                               <Ban size={16} />
                             </button>
                           )}
-                          <button onClick={() => deleteUser(user.id, user.display_name)} disabled={deleting === user.id}
+                          <button onClick={() => setCommunitiesFor(user)}
+                            className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors" title="View communities">
+                            <Users2 size={16} />
+                          </button>
+                          <button onClick={() => setConfirmDelete(user)} disabled={deleting === user.id}
                             className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50" title="Delete user">
                             <Trash2 size={16} />
                           </button>
@@ -583,6 +615,43 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
         </>
         )}
       </div>
+
+      {/* Force-delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} className="text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">Permanently delete user?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Are you sure you want to permanently delete <span className="text-foreground font-medium">{confirmDelete.display_name}</span> (@{confirmDelete.username})?
+                  This will remove them from all community groups, delete all their content, and disable their Member ID. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => setConfirmDelete(null)} disabled={deleting === confirmDelete.id}
+                className="px-4 py-2 text-sm rounded-lg hover:bg-muted disabled:opacity-50">Cancel</button>
+              <button onClick={() => deleteUser(confirmDelete)} disabled={deleting === confirmDelete.id}
+                className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-50 font-medium">
+                {deleting === confirmDelete.id ? 'Deleting...' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User communities modal */}
+      {communitiesFor && (
+        <UserCommunitiesModal
+          userId={communitiesFor.id}
+          username={communitiesFor.username}
+          onClose={() => { setCommunitiesFor(null); loadUsers(); }}
+        />
+      )}
     </div>
   );
 };

@@ -468,10 +468,14 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   <Ban size={16} /> Block User
                 </button>
               )}
-              <button onClick={() => deleteUser(selectedUser.id, selectedUser.display_name)}
+              <button onClick={() => setCommunitiesFor(selectedUser)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm">
+                <Users2 size={16} /> View Communities ({selectedUser.community_count})
+              </button>
+              <button onClick={() => setConfirmDelete(selectedUser)}
                 disabled={deleting === selectedUser.id}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-sm disabled:opacity-50">
-                <Trash2 size={16} /> Delete Account
+                <Trash2 size={16} /> Delete Permanently
               </button>
             </div>
 
@@ -584,7 +588,11 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                               <Ban size={16} />
                             </button>
                           )}
-                          <button onClick={() => deleteUser(user.id, user.display_name)} disabled={deleting === user.id}
+                          <button onClick={() => setCommunitiesFor(user)}
+                            className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors" title="View communities">
+                            <Users2 size={16} />
+                          </button>
+                          <button onClick={() => setConfirmDelete(user)} disabled={deleting === user.id}
                             className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50" title="Delete user">
                             <Trash2 size={16} />
                           </button>

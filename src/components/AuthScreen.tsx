@@ -20,6 +20,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [gender, setGender] = useState('');
+  const [memberId, setMemberId] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,11 +65,33 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
     const target = overrideTarget || targetContact;
     try {
       if (mode === 'register') {
+        const cleanMemberId = memberId.trim().toUpperCase();
+        if (!/^#\d{3}-\d{3}$/.test(cleanMemberId)) {
+          setError('Member ID must follow the format #180-001');
+          setLoading(false);
+          return;
+        }
         if (!username.trim() || username.trim().length < 3) { setError('Username must be at least 3 characters'); setLoading(false); return; }
         if (!email.trim()) { setError('Enter your email'); setLoading(false); return; }
         if (!gender) { setError('Please select your gender'); setLoading(false); return; }
         if (password.length < 6) { setError('Password must be at least 6 characters'); setLoading(false); return; }
         if (password !== confirm) { setError('Passwords do not match'); setLoading(false); return; }
+
+        // Server-side ID validation BEFORE creating account
+        const { data: idStatus, error: idError } = await supabase.rpc('check_member_id', { _member_id: cleanMemberId });
+        if (idError) { setError('Could not verify Member ID. Please try again.'); setLoading(false); return; }
+        if (idStatus === 'not_found' || idStatus === 'invalid_format') {
+          setError('This ID is not recognized. Please contact your administrator.');
+          setLoading(false); return;
+        }
+        if (idStatus === 'claimed') {
+          setError('This ID is already in use. Please contact your administrator.');
+          setLoading(false); return;
+        }
+        if (idStatus === 'disabled') {
+          setError('This ID has been disabled. Please contact your administrator.');
+          setLoading(false); return;
+        }
 
         const { error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
@@ -78,6 +101,7 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
               username: username.trim().toLowerCase(),
               display_name: displayName.trim() || username.trim(),
               gender,
+              member_id: cleanMemberId,
             },
           },
         });
@@ -378,6 +402,13 @@ const AuthScreen = ({ onLogin }: AuthScreenProps) => {
             <div className="flex flex-col gap-2.5">
               {mode === 'register' && (
                 <>
+                  <input
+                    className={`${inputClass} font-mono uppercase tracking-wider`}
+                    placeholder="Member ID (e.g. #180-001)"
+                    maxLength={8}
+                    value={memberId}
+                    onChange={e => setMemberId(e.target.value.toUpperCase().replace(/[^#0-9-]/g, '').slice(0, 8))}
+                  />
                   <input className={inputClass} placeholder="Username (e.g. john)" maxLength={20} value={username} onChange={e => setUsername(e.target.value)} />
                   <input className={inputClass} placeholder="Display name" maxLength={30} value={displayName} onChange={e => setDisplayName(e.target.value)} />
                   <select

@@ -35,6 +35,57 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [announcementContent, setAnnouncementContent] = useState('');
   const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [newUsername, setNewUsername] = useState('');
+  const [assigningId, setAssigningId] = useState(false);
+
+  const validateUsername = (u: string): string | null => {
+    if (u.length < 3 || u.length > 20) return 'Must be 3-20 characters';
+    if (!/^[a-z0-9_]+$/.test(u)) return 'Only lowercase letters, numbers, underscore';
+    if (u.startsWith('_') || u.endsWith('_')) return 'Cannot start or end with underscore';
+    if (u.includes('__')) return 'Cannot contain consecutive underscores';
+    return null;
+  };
+
+  const assignUsername = async () => {
+    if (!selectedUser) return;
+    const trimmed = newUsername.trim().toLowerCase();
+    const err = validateUsername(trimmed);
+    if (err) {
+      toast({ title: 'Invalid ID', description: err, variant: 'destructive' });
+      return;
+    }
+    setAssigningId(true);
+
+    // Client-side checks (server enforces too)
+    const { data: existing } = await supabase
+      .from('profiles').select('id').eq('username', trimmed).maybeSingle();
+    if (existing && existing.id !== selectedUser.id) {
+      toast({ title: 'ID already taken', description: 'This ID is permanently reserved. Choose another.', variant: 'destructive' });
+      setAssigningId(false);
+      return;
+    }
+    const { data: usedBefore } = await supabase
+      .from('used_usernames').select('username').eq('username', trimmed).maybeSingle();
+    if (usedBefore && existing?.id !== selectedUser.id) {
+      toast({ title: 'ID permanently taken', description: 'This ID was used before and cannot be reused.', variant: 'destructive' });
+      setAssigningId(false);
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_assign_username', {
+      _target_user_id: selectedUser.id,
+      _new_username: trimmed,
+    });
+    if (error) {
+      toast({ title: 'Error assigning ID', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'ID assigned', description: `@${trimmed} is now this user's ID.` });
+      setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, username: trimmed } : u));
+      setSelectedUser({ ...selectedUser, username: trimmed });
+      setNewUsername('');
+    }
+    setAssigningId(false);
+  };
 
   const loadAnnouncements = async () => {
     const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(20);

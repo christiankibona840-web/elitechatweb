@@ -35,6 +35,57 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   const [announcementContent, setAnnouncementContent] = useState('');
   const [publishingAnnouncement, setPublishingAnnouncement] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [newUsername, setNewUsername] = useState('');
+  const [assigningId, setAssigningId] = useState(false);
+
+  const validateUsername = (u: string): string | null => {
+    if (u.length < 3 || u.length > 20) return 'Must be 3-20 characters';
+    if (!/^[a-z0-9_]+$/.test(u)) return 'Only lowercase letters, numbers, underscore';
+    if (u.startsWith('_') || u.endsWith('_')) return 'Cannot start or end with underscore';
+    if (u.includes('__')) return 'Cannot contain consecutive underscores';
+    return null;
+  };
+
+  const assignUsername = async () => {
+    if (!selectedUser) return;
+    const trimmed = newUsername.trim().toLowerCase();
+    const err = validateUsername(trimmed);
+    if (err) {
+      toast({ title: 'Invalid ID', description: err, variant: 'destructive' });
+      return;
+    }
+    setAssigningId(true);
+
+    // Client-side checks (server enforces too)
+    const { data: existing } = await supabase
+      .from('profiles').select('id').eq('username', trimmed).maybeSingle();
+    if (existing && existing.id !== selectedUser.id) {
+      toast({ title: 'ID already taken', description: 'This ID is permanently reserved. Choose another.', variant: 'destructive' });
+      setAssigningId(false);
+      return;
+    }
+    const { data: usedBefore } = await supabase
+      .from('used_usernames').select('username').eq('username', trimmed).maybeSingle();
+    if (usedBefore && existing?.id !== selectedUser.id) {
+      toast({ title: 'ID permanently taken', description: 'This ID was used before and cannot be reused.', variant: 'destructive' });
+      setAssigningId(false);
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_assign_username', {
+      _target_user_id: selectedUser.id,
+      _new_username: trimmed,
+    });
+    if (error) {
+      toast({ title: 'Error assigning ID', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'ID assigned', description: `@${trimmed} is now this user's ID.` });
+      setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, username: trimmed } : u));
+      setSelectedUser({ ...selectedUser, username: trimmed });
+      setNewUsername('');
+    }
+    setAssigningId(false);
+  };
 
   const loadAnnouncements = async () => {
     const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(20);
@@ -386,7 +437,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
+              <button onClick={() => { setSelectedUser(null); setNewUsername(''); }} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
             </div>
             <div className="flex gap-2 mt-4">
               {blockedIds.has(selectedUser.id) ? (
@@ -405,6 +456,31 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-sm disabled:opacity-50">
                 <Trash2 size={16} /> Delete Account
               </button>
+            </div>
+
+            {/* Assign User ID */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <KeyRound size={14} className="text-accent" /> Assign User ID
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Current: <span className="font-mono text-foreground">@{selectedUser.username}</span> · IDs are permanent — once used, they can never be reused.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={newUsername}
+                  onChange={e => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))}
+                  placeholder={`New ID for @${selectedUser.username}...`}
+                  className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary transition-colors"
+                />
+                <button
+                  onClick={assignUsername}
+                  disabled={assigningId || !newUsername.trim()}
+                  className="px-4 py-2 bg-gradient-gold text-accent-foreground rounded-lg text-sm font-semibold hover:shadow-gold-strong transition-all disabled:opacity-50"
+                >
+                  {assigningId ? 'Assigning...' : 'Assign ID'}
+                </button>
+              </div>
             </div>
           </div>
         )}

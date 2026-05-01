@@ -718,6 +718,27 @@ export type Database = {
           },
         ]
       }
+      used_usernames: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          username: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          username: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -741,6 +762,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_assign_username: {
+        Args: { _new_username: string; _target_user_id: string }
+        Returns: undefined
+      }
       admin_delete_user: {
         Args: { _target_user_id: string }
         Returns: undefined

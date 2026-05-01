@@ -437,7 +437,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
+              <button onClick={() => { setSelectedUser(null); setNewUsername(''); }} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
             </div>
             <div className="flex gap-2 mt-4">
               {blockedIds.has(selectedUser.id) ? (

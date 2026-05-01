@@ -457,6 +457,31 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                 <Trash2 size={16} /> Delete Account
               </button>
             </div>
+
+            {/* Assign User ID */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <KeyRound size={14} className="text-accent" /> Assign User ID
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Current: <span className="font-mono text-foreground">@{selectedUser.username}</span> · IDs are permanent — once used, they can never be reused.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={newUsername}
+                  onChange={e => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))}
+                  placeholder={`New ID for @${selectedUser.username}...`}
+                  className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary transition-colors"
+                />
+                <button
+                  onClick={assignUsername}
+                  disabled={assigningId || !newUsername.trim()}
+                  className="px-4 py-2 bg-gradient-gold text-accent-foreground rounded-lg text-sm font-semibold hover:shadow-gold-strong transition-all disabled:opacity-50"
+                >
+                  {assigningId ? 'Assigning...' : 'Assign ID'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -340,10 +340,18 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4">
+        <div className="flex gap-1 mb-4 flex-wrap">
           <button onClick={() => setTab('users')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
             <Users size={14} className="inline mr-1.5" /> All Users
+          </button>
+          <button onClick={() => setTab('approved-ids')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'approved-ids' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Hash size={14} className="inline mr-1.5" /> Approved IDs
+          </button>
+          <button onClick={() => setTab('groups')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'groups' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
+            <Users2 size={14} className="inline mr-1.5" /> Groups
           </button>
           <button onClick={() => setTab('blocked')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'blocked' ? 'bg-destructive text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}>
@@ -355,7 +363,7 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
           </button>
         </div>
 
-        {tab === 'announcements' ? (
+        {tab === 'approved-ids' ? <ApprovedIdsPanel /> : tab === 'groups' ? <GroupsPanel /> : tab === 'announcements' ? (
           <div className="space-y-4">
             <div className="bg-card border border-border rounded-xl p-5">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">

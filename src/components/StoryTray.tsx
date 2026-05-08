@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Avatar from './Avatar';
-import { Plus, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -123,6 +123,28 @@ const StoryTray = ({ me }: StoryTrayProps) => {
     load();
   };
 
+  const deleteCurrentStory = async () => {
+    if (!viewing) return;
+    const s = viewing.statuses[viewIdx];
+    if (!s || s.user_id !== me.id) return;
+    if (!window.confirm('Delete this story? This cannot be undone.')) return;
+    if (progressRef.current) window.clearTimeout(progressRef.current);
+    const { error } = await supabase.from('statuses').delete().eq('id', s.id);
+    if (error) { toast.error('Failed to delete story'); return; }
+    toast.success('Story deleted');
+    const remaining = viewing.statuses.filter((_, i) => i !== viewIdx);
+    if (remaining.length === 0) {
+      setViewing(null);
+      setMyStatuses(prev => prev.filter(x => x.id !== s.id));
+    } else {
+      const newGroup = { ...viewing, statuses: remaining };
+      setViewing(newGroup);
+      setViewIdx(Math.min(viewIdx, remaining.length - 1));
+      if (s.user_id === me.id) setMyStatuses(remaining);
+    }
+    load();
+  };
+
   // Hide entirely if nothing & nothing to add — keep visible so user can add
   return (
     <div className="border-b border-border bg-app-panel flex-shrink-0">
@@ -201,12 +223,19 @@ const StoryTray = ({ me }: StoryTrayProps) => {
               </div>
             ))}
           </div>
-          <div className="absolute top-7 left-3 right-3 flex items-center justify-between mt-3">
+          <div className="absolute top-7 left-3 right-3 flex items-center justify-between mt-3 z-10">
             <div className="flex items-center gap-2">
               <Avatar name={viewing.user.display_name} size={32} avatarUrl={viewing.user.avatar_url} />
               <div className="text-sm text-white font-medium">{viewing.user.display_name}</div>
             </div>
-            <button onClick={() => setViewing(null)} className="text-white/80 hover:text-white"><X size={22} /></button>
+            <div className="flex items-center gap-2">
+              {viewing.user.id === me.id && (
+                <button onClick={deleteCurrentStory} className="text-white/80 hover:text-red-400 p-1" title="Delete story" aria-label="Delete story">
+                  <Trash2 size={20} />
+                </button>
+              )}
+              <button onClick={() => setViewing(null)} className="text-white/80 hover:text-white"><X size={22} /></button>
+            </div>
           </div>
 
           {/* Tap zones */}

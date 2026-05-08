@@ -136,6 +136,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
     loadUsers();
     loadBlockedUsers();
     loadAnnouncements();
+    const interval = setInterval(() => { loadUsers(); }, 30000);
+    const channel = supabase
+      .channel('admin-presence')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => loadUsers())
+      .subscribe();
+    return () => { clearInterval(interval); supabase.removeChannel(channel); };
   }, []);
 
   const loadUsers = async () => {
@@ -572,12 +578,19 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                             <Ban size={10} /> Blocked
                           </span>
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
-                            user.is_online ? 'bg-app-online/15 text-app-online' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-app-online' : 'bg-muted-foreground'}`} />
-                            {user.is_online ? 'Online' : 'Offline'}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${
+                              user.is_online ? 'bg-app-online/15 text-app-online' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-app-online animate-pulse' : 'bg-muted-foreground'}`} />
+                              {user.is_online ? 'Online' : 'Offline'}
+                            </span>
+                            {!user.is_online && user.last_seen && (
+                              <span className="text-[10px] text-muted-foreground pl-1">
+                                Last seen: {formatLastSeen(user.last_seen)}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{user.community_count} group{user.community_count !== 1 ? 's' : ''}</td>

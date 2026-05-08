@@ -136,6 +136,12 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
     loadUsers();
     loadBlockedUsers();
     loadAnnouncements();
+    const interval = setInterval(() => { loadUsers(); }, 30000);
+    const channel = supabase
+      .channel('admin-presence')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => loadUsers())
+      .subscribe();
+    return () => { clearInterval(interval); supabase.removeChannel(channel); };
   }, []);
 
   const loadUsers = async () => {

@@ -123,6 +123,28 @@ const StoryTray = ({ me }: StoryTrayProps) => {
     load();
   };
 
+  const deleteCurrentStory = async () => {
+    if (!viewing) return;
+    const s = viewing.statuses[viewIdx];
+    if (!s || s.user_id !== me.id) return;
+    if (!window.confirm('Delete this story? This cannot be undone.')) return;
+    if (progressRef.current) window.clearTimeout(progressRef.current);
+    const { error } = await supabase.from('statuses').delete().eq('id', s.id);
+    if (error) { toast.error('Failed to delete story'); return; }
+    toast.success('Story deleted');
+    const remaining = viewing.statuses.filter((_, i) => i !== viewIdx);
+    if (remaining.length === 0) {
+      setViewing(null);
+      setMyStatuses(prev => prev.filter(x => x.id !== s.id));
+    } else {
+      const newGroup = { ...viewing, statuses: remaining };
+      setViewing(newGroup);
+      setViewIdx(Math.min(viewIdx, remaining.length - 1));
+      if (s.user_id === me.id) setMyStatuses(remaining);
+    }
+    load();
+  };
+
   // Hide entirely if nothing & nothing to add — keep visible so user can add
   return (
     <div className="border-b border-border bg-app-panel flex-shrink-0">

@@ -228,7 +228,14 @@ const StoryTray = ({ me }: StoryTrayProps) => {
               <Avatar name={viewing.user.display_name} size={32} avatarUrl={viewing.user.avatar_url} />
               <div className="text-sm text-white font-medium">{viewing.user.display_name}</div>
             </div>
-            <button onClick={() => setViewing(null)} className="text-white/80 hover:text-white"><X size={22} /></button>
+            <div className="flex items-center gap-2">
+              {viewing.user.id === me.id && (
+                <button onClick={deleteCurrentStory} className="text-white/80 hover:text-red-400 p-1" title="Delete story" aria-label="Delete story">
+                  <Trash2 size={20} />
+                </button>
+              )}
+              <button onClick={() => setViewing(null)} className="text-white/80 hover:text-white"><X size={22} /></button>
+            </div>
           </div>
 
           {/* Tap zones */}

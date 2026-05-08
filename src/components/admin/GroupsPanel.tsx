@@ -196,6 +196,56 @@ const GroupsPanel = () => {
           </div>
         </div>
       )}
+
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2"><Users2 size={16} className="text-primary" /> Create Group</h3>
+              <button onClick={() => setShowCreate(false)}><X size={18} /></button>
+            </div>
+            <div className="p-4 space-y-3 overflow-y-auto flex-1">
+              <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Group name"
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" autoFocus />
+              <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)" rows={2}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none" />
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1"><Search size={12} /> Add members ({selectedMembers.length} selected)</label>
+                <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search users..."
+                  className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary mb-2" />
+                <div className="border border-border rounded-lg max-h-56 overflow-y-auto">
+                  {allUsers.filter(u => {
+                    const q = userSearch.toLowerCase();
+                    return !q || u.display_name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
+                  }).map(u => {
+                    const sel = selectedMembers.includes(u.id);
+                    return (
+                      <button key={u.id} type="button" onClick={() => setSelectedMembers(prev => sel ? prev.filter(x => x !== u.id) : [...prev, u.id])}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent/20 ${sel ? 'bg-primary/10' : ''}`}>
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">
+                          {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : u.display_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{u.display_name}</div>
+                          <div className="text-xs text-muted-foreground truncate">@{u.username}</div>
+                        </div>
+                        {sel && <Check size={14} className="text-primary flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                  {allUsers.length === 0 && <div className="text-center text-xs text-muted-foreground py-4">Loading users...</div>}
+                </div>
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t border-border flex justify-end gap-2">
+              <button onClick={() => setShowCreate(false)} className="px-4 py-2 text-sm rounded-lg hover:bg-muted">Cancel</button>
+              <button onClick={handleCreate} disabled={creating || !newName.trim()} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground disabled:opacity-50">
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

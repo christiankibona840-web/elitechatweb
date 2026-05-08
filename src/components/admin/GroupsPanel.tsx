@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Users2, UserMinus, Crown, X, AlertTriangle } from 'lucide-react';
+import { Users2, UserMinus, Crown, X, AlertTriangle, Plus, Check, Search } from 'lucide-react';
 
 interface Group { id: string; name: string; description: string | null; created_at: string; created_by: string | null; owner_username: string | null; member_count: number; ownerless: boolean; }
 interface Member { user_id: string; username: string; display_name: string; avatar_url: string | null; role: string; joined_at: string; is_owner: boolean; }

@@ -223,7 +223,7 @@ const StoryTray = ({ me }: StoryTrayProps) => {
               </div>
             ))}
           </div>
-          <div className="absolute top-7 left-3 right-3 flex items-center justify-between mt-3">
+          <div className="absolute top-7 left-3 right-3 flex items-center justify-between mt-3 z-10">
             <div className="flex items-center gap-2">
               <Avatar name={viewing.user.display_name} size={32} avatarUrl={viewing.user.avatar_url} />
               <div className="text-sm text-white font-medium">{viewing.user.display_name}</div>

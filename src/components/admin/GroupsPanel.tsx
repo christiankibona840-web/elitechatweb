@@ -14,6 +14,46 @@ const GroupsPanel = () => {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [confirm, setConfirm] = useState<{ group: Group; member: Member } | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [allUsers, setAllUsers] = useState<{ id: string; display_name: string; username: string; avatar_url: string | null }[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const loadAllUsers = async () => {
+    const { data } = await supabase.rpc('admin_list_users');
+    if (data) setAllUsers((data as any[]).map(u => ({ id: u.id, display_name: u.display_name, username: u.username, avatar_url: u.avatar_url })));
+  };
+
+  const openCreate = () => {
+    setShowCreate(true);
+    setNewName(''); setNewDesc(''); setSelectedMembers([]); setUserSearch('');
+    if (allUsers.length === 0) loadAllUsers();
+  };
+
+  const handleCreate = async () => {
+    if (!newName.trim()) { toast({ title: 'Enter a name', variant: 'destructive' }); return; }
+    setCreating(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setCreating(false); return; }
+    const { data: g, error } = await supabase.from('groups')
+      .insert({ name: newName.trim(), description: newDesc.trim() || null, created_by: user.id })
+      .select().single();
+    if (error || !g) {
+      toast({ title: 'Error', description: error?.message || 'Failed to create', variant: 'destructive' });
+      setCreating(false); return;
+    }
+    await supabase.from('group_members').insert({ group_id: g.id, user_id: user.id, role: 'admin' });
+    for (const uid of selectedMembers) {
+      if (uid === user.id) continue;
+      await supabase.from('group_members').insert({ group_id: g.id, user_id: uid, role: 'member' });
+    }
+    toast({ title: 'Group created', description: `"${newName}" with ${selectedMembers.length + 1} member(s)` });
+    setShowCreate(false);
+    load();
+  };
 
   const load = async () => {
     setLoading(true);

@@ -898,7 +898,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   </div>
                   {!isDeleted && renderReactions(msg.id)}
                 </div>
-                {isMe && !isDeleted && (
+                {isMe && !isDeleted && !selectionMode && (
                   <MessageActions isMe={true} isStarred={starredIds.has(msg.id)}
                     canEdit={!!msg.content && !msg.file_url && !isBot}
                     onEdit={() => setEditingMsg({ id: msg.id, content: msg.content || '' })}

@@ -81,6 +81,47 @@ const Index = () => {
     }
   }, [session]);
 
+  // Activity heartbeat — proves user is truly active in the web (not just left logged in)
+  useEffect(() => {
+    if (!profile?.id) return;
+    const userId = profile.id;
+
+    const beat = (online: boolean) => {
+      supabase.from('profiles')
+        .update({ is_online: online, last_seen: new Date().toISOString() })
+        .eq('id', userId);
+    };
+
+    // Initial heartbeat
+    beat(true);
+    // Every 45s while tab is visible
+    const interval = setInterval(() => {
+      if (!document.hidden) beat(true);
+    }, 45000);
+
+    const onVisibility = () => beat(!document.hidden);
+    const onUnload = () => {
+      // Best-effort mark offline on close
+      try {
+        navigator.sendBeacon?.(
+          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+          new Blob([JSON.stringify({ is_online: false, last_seen: new Date().toISOString() })], { type: 'application/json' })
+        );
+      } catch {}
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('beforeunload', onUnload);
+    window.addEventListener('pagehide', onUnload);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('beforeunload', onUnload);
+      window.removeEventListener('pagehide', onUnload);
+    };
+  }, [profile?.id]);
+
   useEffect(() => {
     if (!profile || !pendingTargetId) return;
 

@@ -237,6 +237,15 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
     return formatDate(d);
   };
 
+  // "Truly active" = online flag AND heartbeat within last 2 minutes.
+  // Otherwise we consider them idle / probably forgot to log out.
+  const getActivity = (u: AdminUser): 'active' | 'idle' | 'offline' => {
+    if (!u.is_online) return 'offline';
+    if (!u.last_seen) return 'idle';
+    const ageMs = Date.now() - new Date(u.last_seen).getTime();
+    return ageMs < 2 * 60 * 1000 ? 'active' : 'idle';
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -552,9 +561,15 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                                 user.display_name.charAt(0).toUpperCase()
                               )}
                             </div>
-                            {user.is_online && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-app-online rounded-full border-2 border-card" />
-                            )}
+                            {(() => {
+                              const a = getActivity(user);
+                              if (a === 'offline') return null;
+                              return (
+                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${
+                                  a === 'active' ? 'bg-app-online' : 'bg-yellow-500'
+                                }`} />
+                              );
+                            })()}
                           </div>
                           <div>
                             <p className="font-medium flex items-center gap-1.5">
@@ -577,21 +592,46 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">
                             <Ban size={10} /> Blocked
                           </span>
-                        ) : (
-                          <div className="flex flex-col gap-1">
-                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${
-                              user.is_online ? 'bg-app-online/15 text-app-online' : 'bg-muted text-muted-foreground'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-app-online animate-pulse' : 'bg-muted-foreground'}`} />
-                              {user.is_online ? 'Online' : 'Offline'}
-                            </span>
-                            {!user.is_online && user.last_seen && (
-                              <span className="text-[10px] text-muted-foreground pl-1">
-                                Last seen: {formatLastSeen(user.last_seen)}
+                        ) : (() => {
+                          const a = getActivity(user);
+                          if (a === 'active') {
+                            return (
+                              <div className="flex flex-col gap-1">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full w-fit bg-app-online/15 text-app-online">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-app-online animate-pulse" />
+                                  Active now
+                                </span>
+                                <span className="text-[10px] text-muted-foreground pl-1">Truly in the web</span>
+                              </div>
+                            );
+                          }
+                          if (a === 'idle') {
+                            return (
+                              <div className="flex flex-col gap-1">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full w-fit bg-yellow-500/15 text-yellow-600 dark:text-yellow-400">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                                  Idle
+                                </span>
+                                <span className="text-[10px] text-muted-foreground pl-1">
+                                  May have forgotten to log out{user.last_seen ? ` · last active ${formatLastSeen(user.last_seen)}` : ''}
+                                </span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full w-fit bg-muted text-muted-foreground">
+                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                                Offline
                               </span>
-                            )}
-                          </div>
-                        )}
+                              {user.last_seen && (
+                                <span className="text-[10px] text-muted-foreground pl-1">
+                                  Last seen: {formatLastSeen(user.last_seen)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{user.community_count} group{user.community_count !== 1 ? 's' : ''}</td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(user.created_at)}</td>

@@ -702,6 +702,10 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             </button>
             {showHeaderMenu && (
               <div className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-30 min-w-[180px] py-1">
+                <button onClick={() => { setSelectionMode(true); setSelectedIds(new Set()); setShowHeaderMenu(false); }}
+                  className="flex items-center gap-2.5 px-4 py-2.5 w-full text-left text-sm text-foreground hover:bg-muted/30 transition-colors">
+                  <CheckSquare size={15} /> Select messages
+                </button>
                 <button onClick={() => { setShowMediaGallery(true); setShowHeaderMenu(false); }}
                   className="flex items-center gap-2.5 px-4 py-2.5 w-full text-left text-sm text-foreground hover:bg-muted/30 transition-colors">
                   <ImagePlay size={15} /> Media & Docs

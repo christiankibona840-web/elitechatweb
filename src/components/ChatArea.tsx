@@ -11,7 +11,7 @@ import StarredMessages from './StarredMessages';
 import SmartReply from './SmartReply';
 import ProfileViewModal from './ProfileViewModal';
 import GameInviteModal from './games/GameInviteModal';
-import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown, Gamepad2 } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown, Gamepad2, Trash2, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 

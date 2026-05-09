@@ -96,6 +96,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     setShowStarred(false);
     setShowHeaderMenu(false);
     setShowDisappearPicker(false);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
 
     // Handle Lovable AI bot chat
     if (activeChat.type === 'dm' && activeChat.id === LOVABLE_BOT_ID) {

@@ -1,4 +1,13 @@
 {
+  "name": "yst-web-chat",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc && vite build",
+    "start": "node dist/server.js" 
+  },
+  "dependencies": { ... }
+}
+{
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",

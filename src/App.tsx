@@ -1,27 +1,31 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { useEffect, useState } from "react";
 
-const queryClient = new QueryClient();
+const Index = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
-export default App;
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      {/* The fix is below: 
+          'duration-[1500ms]' changed to 'duration-[transition-duration:1500ms]' 
+      */}
+      <div 
+        className={`transition-all duration-[transition-duration:1500ms] ease-in-out transform ${
+          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        }`}
+      >
+        <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 text-center">
+          YST Web Chat
+        </h1>
+        <p className="text-muted-foreground text-lg text-center max-w-md">
+          A modern, secure messaging platform for teams and communities.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Index;

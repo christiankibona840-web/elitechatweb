@@ -830,8 +830,20 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   <span className="bg-accent border border-border text-muted-foreground text-xs px-3 py-1 rounded-lg">{dateStr}</span>
                 </div>
               )}
-              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                {!isMe && !isDeleted && (
+              <div
+                className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'} ${selectionMode ? 'cursor-pointer rounded-md px-1 -mx-1 ' + (selectedIds.has(msg.id) ? 'bg-primary/15' : 'hover:bg-muted/20') : ''}`}
+                onClick={selectionMode ? () => toggleSelect(msg.id) : undefined}
+              >
+                {selectionMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(msg.id)}
+                    onChange={() => toggleSelect(msg.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mb-2 mr-1 h-4 w-4 accent-primary cursor-pointer"
+                  />
+                )}
+                {!isMe && !isDeleted && !selectionMode && (
                   <MessageActions isMe={false} isStarred={starredIds.has(msg.id)}
                     onReply={handleReply} onDelete={() => {}} onForward={() => setForwardMsg(msg)}
                     onReact={(emoji) => toggleReaction(msg.id, emoji)} onStar={() => toggleStar(msg.id)} />

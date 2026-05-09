@@ -2,37 +2,17 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: [
-    "./index.html",
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-  ],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
       center: true,
       padding: "2rem",
-      screens: { "2xl": "1400px" },
+      screens: {
+        "2xl": "1400px",
+      },
     },
     extend: {
-      // Named durations so you never need ambiguous `duration-[1500ms]`
-      transitionDuration: {
-        "400": "400ms",
-        "600": "600ms",
-        "800": "800ms",
-        "1200": "1200ms",
-        "1500": "1500ms",
-        "2000": "2000ms",
-        "3000": "3000ms",
-      },
-      animationDuration: {
-        "1500": "1500ms",
-        "2000": "2000ms",
-        "3000": "3000ms",
-      },
-
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -77,40 +57,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        app: {
-          primary: "hsl(var(--app-primary))",
-          "primary-dark": "hsl(var(--app-primary-dark))",
-          accent: "hsl(var(--app-accent))",
-          "accent-light": "hsl(var(--app-accent-light))",
-          "bubble-out": "hsl(var(--app-bubble-out))",
-          panel: "hsl(var(--app-panel))",
-          "chat-bg": "hsl(var(--app-chat-bg))",
-          "bubble-in": "hsl(var(--app-bubble-in))",
-          header: "hsl(var(--app-header))",
-          "input-bg": "hsl(var(--app-input-bg))",
-          online: "hsl(var(--app-online))",
-          icon: "hsl(var(--app-icon))",
+        wa: {
+          green: "hsl(var(--wa-green))",
+          "green-dark": "hsl(var(--wa-green-dark))",
+          "green-light": "hsl(var(--wa-green-light))",
+          panel: "hsl(var(--wa-panel))",
+          "chat-bg": "hsl(var(--wa-chat-bg))",
+          "bubble-in": "hsl(var(--wa-bubble-in))",
+          header: "hsl(var(--wa-header))",
+          "input-bg": "hsl(var(--wa-input-bg))",
+          online: "hsl(var(--wa-online))",
+          icon: "hsl(var(--wa-icon))",
         },
-        brand: {
-          primary: "hsl(var(--brand-primary))",
-          secondary: "hsl(var(--brand-secondary))",
-          accent: "hsl(var(--brand-accent))",
-          light: "hsl(var(--brand-light))",
-          dark: "hsl(var(--brand-dark))",
-        },
-      },
-      fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ['"Playfair Display"', "Georgia", "serif"],
-      },
-      backgroundImage: {
-        "gradient-hero": "var(--gradient-hero)",
-        "gradient-gold": "var(--gradient-gold)",
-      },
-      boxShadow: {
-        gold: "var(--shadow-gold)",
-        "gold-strong": "var(--shadow-gold-strong)",
-        elegant: "var(--shadow-elegant)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -119,12 +77,20 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
       },
       animation: {

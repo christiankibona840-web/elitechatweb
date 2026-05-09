@@ -249,12 +249,23 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   useEffect(() => {
     if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;
     const now = Date.now();
-    const expired = messages.filter(m => {
+    // Only the sender can hard-delete their own messages (RLS) — frees DB + storage space
+    const expiredMine = messages.filter(m => {
+      if (m.sender_id !== me.id) return false;
       const age = now - new Date(m.created_at).getTime();
       return age > disappearSetting * 1000;
     });
-    if (expired.length > 0) {
-      setMessages(prev => prev.filter(m => !expired.some(e => e.id === m.id)));
+    if (expiredMine.length > 0) {
+      hardDeleteMessages(expiredMine);
+    }
+    // For messages from others, just hide locally; their owner's client will purge them
+    const expiredOthers = messages.filter(m => {
+      if (m.sender_id === me.id) return false;
+      const age = now - new Date(m.created_at).getTime();
+      return age > disappearSetting * 1000;
+    });
+    if (expiredOthers.length > 0) {
+      setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
     }
   }, [disappearSetting, messages]);
 

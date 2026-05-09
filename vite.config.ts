@@ -12,7 +12,16 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  // ADD THIS PREVIEW SECTION BELOW
+  preview: {
+    host: true,
+    port: 10000,
+    allowedHosts: true
+  },
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

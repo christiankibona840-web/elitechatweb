@@ -415,12 +415,70 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     onMessagesChanged();
   };
 
-  const deleteForEveryone = async (msg: any) => {
-    if (!confirm('Delete this message for everyone?')) return;
+  // Parse Supabase storage public URL → { bucket, path }
+  const parseStorageUrl = (url: string | null | undefined): { bucket: string; path: string } | null => {
+    if (!url) return null;
+    const m = url.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/);
+    if (!m) return null;
+    return { bucket: m[1], path: decodeURIComponent(m[2]) };
+  };
+
+  // Hard delete: remove rows from DB and free storage space
+  const hardDeleteMessages = async (msgs: any[]) => {
+    if (msgs.length === 0) return { ok: 0, fail: 0 };
     const table = activeChat?.type === 'dm' ? 'messages' : 'group_messages';
-    await supabase.from(table).update({ content: null, file_url: null, file_name: null, file_type: null, deleted_for_everyone: true }).eq('id', msg.id);
-    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: null, file_url: null, deleted_for_everyone: true } : m));
-    toast.success('Message deleted');
+
+    // Group storage files by bucket and remove
+    const byBucket: Record<string, string[]> = {};
+    msgs.forEach(m => {
+      const parsed = parseStorageUrl(m.file_url);
+      if (parsed) {
+        byBucket[parsed.bucket] = byBucket[parsed.bucket] || [];
+        byBucket[parsed.bucket].push(parsed.path);
+      }
+    });
+    await Promise.all(
+      Object.entries(byBucket).map(([bucket, paths]) =>
+        supabase.storage.from(bucket).remove(paths).catch(() => null)
+      )
+    );
+
+    // Clear reactions / stars first (no FK cascade)
+    const ids = msgs.map(m => m.id);
+    await supabase.from('message_reactions').delete().in('message_id', ids);
+    await supabase.from('starred_messages').delete().in('message_id', ids);
+
+    const { error, data } = await supabase.from(table).delete().in('id', ids).select('id');
+    if (error) return { ok: 0, fail: msgs.length };
+    const okIds = new Set((data || []).map((r: any) => r.id));
+    setMessages(prev => prev.filter(m => !okIds.has(m.id)));
+    return { ok: okIds.size, fail: msgs.length - okIds.size };
+  };
+
+  const deleteForEveryone = async (msg: any) => {
+    if (!confirm('Permanently delete this message? Files will be removed and space freed.')) return;
+    const res = await hardDeleteMessages([msg]);
+    if (res.ok > 0) toast.success('Message deleted');
+    else toast.error('Could not delete message');
+  };
+
+  const bulkDeleteSelected = async () => {
+    const toDelete = messages.filter(m => selectedIds.has(m.id) && m.sender_id === me.id);
+    if (toDelete.length === 0) { toast.error('You can only delete your own messages'); return; }
+    if (!confirm(`Permanently delete ${toDelete.length} message(s)? Files will be removed and space freed.`)) return;
+    const res = await hardDeleteMessages(toDelete);
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+    if (res.ok > 0) toast.success(`${res.ok} message(s) deleted`);
+    if (res.fail > 0) toast.error(`${res.fail} could not be deleted`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
   };
 
   const toggleReaction = async (msgId: string, emoji: string) => {

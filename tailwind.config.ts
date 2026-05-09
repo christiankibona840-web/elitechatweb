@@ -2,7 +2,6 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  // UPDATED PATHS: Ensure it looks for files in the current directory (.)
   content: [
     "./index.html",
     "./pages/**/*.{ts,tsx}",
@@ -15,11 +14,25 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
+      // Named durations so you never need ambiguous `duration-[1500ms]`
+      transitionDuration: {
+        "400": "400ms",
+        "600": "600ms",
+        "800": "800ms",
+        "1200": "1200ms",
+        "1500": "1500ms",
+        "2000": "2000ms",
+        "3000": "3000ms",
+      },
+      animationDuration: {
+        "1500": "1500ms",
+        "2000": "2000ms",
+        "3000": "3000ms",
+      },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -87,17 +100,17 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ['"Playfair Display"', "Georgia", "serif"],
       },
       backgroundImage: {
-        'gradient-hero': 'var(--gradient-hero)',
-        'gradient-gold': 'var(--gradient-gold)',
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-gold": "var(--gradient-gold)",
       },
       boxShadow: {
-        gold: 'var(--shadow-gold)',
-        'gold-strong': 'var(--shadow-gold-strong)',
-        elegant: 'var(--shadow-elegant)',
+        gold: "var(--shadow-gold)",
+        "gold-strong": "var(--shadow-gold-strong)",
+        elegant: "var(--shadow-elegant)",
       },
       borderRadius: {
         lg: "var(--radius)",

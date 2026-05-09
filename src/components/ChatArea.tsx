@@ -11,7 +11,7 @@ import StarredMessages from './StarredMessages';
 import SmartReply from './SmartReply';
 import ProfileViewModal from './ProfileViewModal';
 import GameInviteModal from './games/GameInviteModal';
-import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown, Gamepad2 } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Image as ImageIcon, Mic, ArrowLeft, Search, Star, ImagePlay, Timer, ChevronDown, Gamepad2, Trash2, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -73,6 +73,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   const [botLoading, setBotLoading] = useState(false);
   const [editingMsg, setEditingMsg] = useState<{ id: string; content: string } | null>(null);
   const [showGameInvite, setShowGameInvite] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +96,8 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     setShowStarred(false);
     setShowHeaderMenu(false);
     setShowDisappearPicker(false);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
 
     // Handle Lovable AI bot chat
     if (activeChat.type === 'dm' && activeChat.id === LOVABLE_BOT_ID) {
@@ -245,12 +249,23 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
   useEffect(() => {
     if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;
     const now = Date.now();
-    const expired = messages.filter(m => {
+    // Only the sender can hard-delete their own messages (RLS) — frees DB + storage space
+    const expiredMine = messages.filter(m => {
+      if (m.sender_id !== me.id) return false;
       const age = now - new Date(m.created_at).getTime();
       return age > disappearSetting * 1000;
     });
-    if (expired.length > 0) {
-      setMessages(prev => prev.filter(m => !expired.some(e => e.id === m.id)));
+    if (expiredMine.length > 0) {
+      hardDeleteMessages(expiredMine);
+    }
+    // For messages from others, just hide locally; their owner's client will purge them
+    const expiredOthers = messages.filter(m => {
+      if (m.sender_id === me.id) return false;
+      const age = now - new Date(m.created_at).getTime();
+      return age > disappearSetting * 1000;
+    });
+    if (expiredOthers.length > 0) {
+      setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
     }
   }, [disappearSetting, messages]);
 
@@ -411,12 +426,70 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     onMessagesChanged();
   };
 
-  const deleteForEveryone = async (msg: any) => {
-    if (!confirm('Delete this message for everyone?')) return;
+  // Parse Supabase storage public URL → { bucket, path }
+  const parseStorageUrl = (url: string | null | undefined): { bucket: string; path: string } | null => {
+    if (!url) return null;
+    const m = url.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/);
+    if (!m) return null;
+    return { bucket: m[1], path: decodeURIComponent(m[2]) };
+  };
+
+  // Hard delete: remove rows from DB and free storage space
+  const hardDeleteMessages = async (msgs: any[]) => {
+    if (msgs.length === 0) return { ok: 0, fail: 0 };
     const table = activeChat?.type === 'dm' ? 'messages' : 'group_messages';
-    await supabase.from(table).update({ content: null, file_url: null, file_name: null, file_type: null, deleted_for_everyone: true }).eq('id', msg.id);
-    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: null, file_url: null, deleted_for_everyone: true } : m));
-    toast.success('Message deleted');
+
+    // Group storage files by bucket and remove
+    const byBucket: Record<string, string[]> = {};
+    msgs.forEach(m => {
+      const parsed = parseStorageUrl(m.file_url);
+      if (parsed) {
+        byBucket[parsed.bucket] = byBucket[parsed.bucket] || [];
+        byBucket[parsed.bucket].push(parsed.path);
+      }
+    });
+    await Promise.all(
+      Object.entries(byBucket).map(([bucket, paths]) =>
+        supabase.storage.from(bucket).remove(paths).catch(() => null)
+      )
+    );
+
+    // Clear reactions / stars first (no FK cascade)
+    const ids = msgs.map(m => m.id);
+    await supabase.from('message_reactions').delete().in('message_id', ids);
+    await supabase.from('starred_messages').delete().in('message_id', ids);
+
+    const { error, data } = await supabase.from(table).delete().in('id', ids).select('id');
+    if (error) return { ok: 0, fail: msgs.length };
+    const okIds = new Set((data || []).map((r: any) => r.id));
+    setMessages(prev => prev.filter(m => !okIds.has(m.id)));
+    return { ok: okIds.size, fail: msgs.length - okIds.size };
+  };
+
+  const deleteForEveryone = async (msg: any) => {
+    if (!confirm('Permanently delete this message? Files will be removed and space freed.')) return;
+    const res = await hardDeleteMessages([msg]);
+    if (res.ok > 0) toast.success('Message deleted');
+    else toast.error('Could not delete message');
+  };
+
+  const bulkDeleteSelected = async () => {
+    const toDelete = messages.filter(m => selectedIds.has(m.id) && m.sender_id === me.id);
+    if (toDelete.length === 0) { toast.error('You can only delete your own messages'); return; }
+    if (!confirm(`Permanently delete ${toDelete.length} message(s)? Files will be removed and space freed.`)) return;
+    const res = await hardDeleteMessages(toDelete);
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+    if (res.ok > 0) toast.success(`${res.ok} message(s) deleted`);
+    if (res.fail > 0) toast.error(`${res.fail} could not be deleted`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
   };
 
   const toggleReaction = async (msgId: string, emoji: string) => {
@@ -629,6 +702,10 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
             </button>
             {showHeaderMenu && (
               <div className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-30 min-w-[180px] py-1">
+                <button onClick={() => { setSelectionMode(true); setSelectedIds(new Set()); setShowHeaderMenu(false); }}
+                  className="flex items-center gap-2.5 px-4 py-2.5 w-full text-left text-sm text-foreground hover:bg-muted/30 transition-colors">
+                  <CheckSquare size={15} /> Select messages
+                </button>
                 <button onClick={() => { setShowMediaGallery(true); setShowHeaderMenu(false); }}
                   className="flex items-center gap-2.5 px-4 py-2.5 w-full text-left text-sm text-foreground hover:bg-muted/30 transition-colors">
                   <ImagePlay size={15} /> Media & Docs
@@ -697,6 +774,34 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         </div>
       )}
 
+      {/* Selection action bar */}
+      {selectionMode && (
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-primary/10 border-b border-primary/30 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+              className="text-app-icon hover:text-foreground p-1" title="Cancel">
+              <X size={18} />
+            </button>
+            <span className="text-sm font-medium text-foreground">{selectedIds.size} selected</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSelectedIds(new Set(messages.filter(m => m.sender_id === me.id).map(m => m.id)))}
+              className="text-xs px-2.5 py-1 rounded-md hover:bg-muted/40 text-foreground"
+            >
+              Select all mine
+            </button>
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={selectedIds.size === 0}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-40"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div className={`flex-1 overflow-y-auto px-3 sm:px-[6%] md:px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
         {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}
@@ -725,8 +830,20 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   <span className="bg-accent border border-border text-muted-foreground text-xs px-3 py-1 rounded-lg">{dateStr}</span>
                 </div>
               )}
-              <div className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                {!isMe && !isDeleted && (
+              <div
+                className={`flex mb-1 animate-[msg-pop_0.15s_ease-out] group items-end gap-1 ${isMe ? 'justify-end' : 'justify-start'} ${selectionMode ? 'cursor-pointer rounded-md px-1 -mx-1 ' + (selectedIds.has(msg.id) ? 'bg-primary/15' : 'hover:bg-muted/20') : ''}`}
+                onClick={selectionMode ? () => toggleSelect(msg.id) : undefined}
+              >
+                {selectionMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(msg.id)}
+                    onChange={() => toggleSelect(msg.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mb-2 mr-1 h-4 w-4 accent-primary cursor-pointer"
+                  />
+                )}
+                {!isMe && !isDeleted && !selectionMode && (
                   <MessageActions isMe={false} isStarred={starredIds.has(msg.id)}
                     onReply={handleReply} onDelete={() => {}} onForward={() => setForwardMsg(msg)}
                     onReact={(emoji) => toggleReaction(msg.id, emoji)} onStar={() => toggleStar(msg.id)} />
@@ -781,7 +898,7 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
                   </div>
                   {!isDeleted && renderReactions(msg.id)}
                 </div>
-                {isMe && !isDeleted && (
+                {isMe && !isDeleted && !selectionMode && (
                   <MessageActions isMe={true} isStarred={starredIds.has(msg.id)}
                     canEdit={!!msg.content && !msg.file_url && !isBot}
                     onEdit={() => setEditingMsg({ id: msg.id, content: msg.content || '' })}

@@ -774,6 +774,34 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
         </div>
       )}
 
+      {/* Selection action bar */}
+      {selectionMode && (
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-primary/10 border-b border-primary/30 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+              className="text-app-icon hover:text-foreground p-1" title="Cancel">
+              <X size={18} />
+            </button>
+            <span className="text-sm font-medium text-foreground">{selectedIds.size} selected</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSelectedIds(new Set(messages.filter(m => m.sender_id === me.id).map(m => m.id)))}
+              className="text-xs px-2.5 py-1 rounded-md hover:bg-muted/40 text-foreground"
+            >
+              Select all mine
+            </button>
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={selectedIds.size === 0}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-40"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div className={`flex-1 overflow-y-auto px-3 sm:px-[6%] md:px-[10%] py-3 ${!wallpaper ? 'app-pattern-bg' : ''}`} style={chatBgStyle}>
         {wallpaper && <div className="fixed inset-0 pointer-events-none" style={{ ...chatBgStyle, zIndex: -1 }} />}

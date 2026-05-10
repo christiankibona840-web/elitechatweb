@@ -249,28 +249,23 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
     messagesEndRef.current?.scrollIntoView({ behavior });
   }, [messages.length]);
 
+  // Disappearing-message sweep: run on a 30s interval (NOT on every messages change)
   useEffect(() => {
-    if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;
-    const now = Date.now();
-    // Only the sender can hard-delete their own messages (RLS) — frees DB + storage space
-    const expiredMine = messages.filter(m => {
-      if (m.sender_id !== me.id) return false;
-      const age = now - new Date(m.created_at).getTime();
-      return age > disappearSetting * 1000;
-    });
-    if (expiredMine.length > 0) {
-      hardDeleteMessages(expiredMine);
-    }
-    // For messages from others, just hide locally; their owner's client will purge them
-    const expiredOthers = messages.filter(m => {
-      if (m.sender_id === me.id) return false;
-      const age = now - new Date(m.created_at).getTime();
-      return age > disappearSetting * 1000;
-    });
-    if (expiredOthers.length > 0) {
-      setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
-    }
-  }, [disappearSetting, messages]);
+    if (disappearSetting <= 0 || !activeChat) return;
+    const sweep = () => {
+      const now = Date.now();
+      const ttl = disappearSetting * 1000;
+      const expiredMine = messagesRef.current.filter(m => m.sender_id === me.id && now - new Date(m.created_at).getTime() > ttl);
+      const expiredOthers = messagesRef.current.filter(m => m.sender_id !== me.id && now - new Date(m.created_at).getTime() > ttl);
+      if (expiredMine.length > 0) hardDeleteMessages(expiredMine);
+      if (expiredOthers.length > 0) {
+        setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
+      }
+    };
+    sweep();
+    const id = setInterval(sweep, 30000);
+    return () => clearInterval(id);
+  }, [disappearSetting, activeChat?.id, me.id]);
 
   const broadcastTyping = useCallback(() => {
     if (!activeChat || activeChat.type !== 'dm') return;

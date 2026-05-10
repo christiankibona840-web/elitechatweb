@@ -207,67 +207,65 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       });
   }, [activeChat?.id, me.id]);
 
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const msgIds = messages.map(m => m.id);
-    supabase.from('message_reactions').select('*').in('message_id', msgIds).then(({ data }) => {
-      if (!data) return;
-      const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
-      data.forEach((r: any) => {
-        if (!grouped[r.message_id]) grouped[r.message_id] = [];
-        grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
-      });
-      setReactions(grouped);
-    });
-  }, [messages]);
+  // Stable signature of message ids so reactions only refetch when the set actually changes
+  const messageIdsKey = messages.map(m => m.id).join(',');
+  const messagesRef = useRef<any[]>(messages);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
+  const fetchReactions = useCallback(async () => {
+    const ids = messagesRef.current.map(m => m.id).filter(Boolean);
+    if (ids.length === 0) { setReactions({}); return; }
+    const { data } = await supabase.from('message_reactions').select('message_id, emoji, user_id').in('message_id', ids);
+    if (!data) return;
+    const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
+    data.forEach((r: any) => {
+      (grouped[r.message_id] = grouped[r.message_id] || []).push({ emoji: r.emoji, user_id: r.user_id });
+    });
+    setReactions(grouped);
+  }, []);
+
+  useEffect(() => { fetchReactions(); }, [messageIdsKey, fetchReactions]);
+
+  // Subscribe ONCE per chat, not on every message change
   useEffect(() => {
+    if (!activeChat) return;
     const ch = supabase
-      .channel('reactions-realtime')
+      .channel(`reactions-${activeChat.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, () => {
-        if (messages.length > 0) {
-          const msgIds = messages.map(m => m.id);
-          supabase.from('message_reactions').select('*').in('message_id', msgIds).then(({ data }) => {
-            if (!data) return;
-            const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
-            data.forEach((r: any) => {
-              if (!grouped[r.message_id]) grouped[r.message_id] = [];
-              grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
-            });
-            setReactions(grouped);
-          });
-        }
+        fetchReactions();
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [messages]);
+  }, [activeChat?.id, fetchReactions]);
 
+  // Auto-scroll: instant on initial load / large jumps, smooth only for incremental updates
+  const prevMsgCountRef = useRef(0);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const prev = prevMsgCountRef.current;
+    const diff = messages.length - prev;
+    prevMsgCountRef.current = messages.length;
+    if (messages.length === 0) return;
+    const behavior: ScrollBehavior = diff > 3 || prev === 0 ? 'auto' : 'smooth';
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  }, [messages.length]);
 
+  // Disappearing-message sweep: run on a 30s interval (NOT on every messages change)
   useEffect(() => {
-    if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;
-    const now = Date.now();
-    // Only the sender can hard-delete their own messages (RLS) — frees DB + storage space
-    const expiredMine = messages.filter(m => {
-      if (m.sender_id !== me.id) return false;
-      const age = now - new Date(m.created_at).getTime();
-      return age > disappearSetting * 1000;
-    });
-    if (expiredMine.length > 0) {
-      hardDeleteMessages(expiredMine);
-    }
-    // For messages from others, just hide locally; their owner's client will purge them
-    const expiredOthers = messages.filter(m => {
-      if (m.sender_id === me.id) return false;
-      const age = now - new Date(m.created_at).getTime();
-      return age > disappearSetting * 1000;
-    });
-    if (expiredOthers.length > 0) {
-      setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
-    }
-  }, [disappearSetting, messages]);
+    if (disappearSetting <= 0 || !activeChat) return;
+    const sweep = () => {
+      const now = Date.now();
+      const ttl = disappearSetting * 1000;
+      const expiredMine = messagesRef.current.filter(m => m.sender_id === me.id && now - new Date(m.created_at).getTime() > ttl);
+      const expiredOthers = messagesRef.current.filter(m => m.sender_id !== me.id && now - new Date(m.created_at).getTime() > ttl);
+      if (expiredMine.length > 0) hardDeleteMessages(expiredMine);
+      if (expiredOthers.length > 0) {
+        setMessages(prev => prev.filter(m => !expiredOthers.some(e => e.id === m.id)));
+      }
+    };
+    sweep();
+    const id = setInterval(sweep, 30000);
+    return () => clearInterval(id);
+  }, [disappearSetting, activeChat?.id, me.id]);
 
   const broadcastTyping = useCallback(() => {
     if (!activeChat || activeChat.type !== 'dm') return;
@@ -299,8 +297,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       .from('messages')
       .select('*')
       .or(`and(sender_id.eq.${me.id},receiver_id.eq.${contactId}),and(sender_id.eq.${contactId},receiver_id.eq.${me.id})`)
-      .order('created_at', { ascending: true });
-    setMessages(data || []);
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setMessages((data || []).reverse());
   };
 
   const loadGroupMessages = async (groupId: string) => {
@@ -308,8 +307,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       .from('group_messages')
       .select('*, profiles!group_messages_sender_id_fkey(display_name)')
       .eq('group_id', groupId)
-      .order('created_at', { ascending: true });
-    setMessages(data || []);
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setMessages((data || []).reverse());
   };
 
   const markAsRead = async (senderId: string) => {

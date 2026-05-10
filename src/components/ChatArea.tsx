@@ -207,44 +207,47 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       });
   }, [activeChat?.id, me.id]);
 
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const msgIds = messages.map(m => m.id);
-    supabase.from('message_reactions').select('*').in('message_id', msgIds).then(({ data }) => {
-      if (!data) return;
-      const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
-      data.forEach((r: any) => {
-        if (!grouped[r.message_id]) grouped[r.message_id] = [];
-        grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
-      });
-      setReactions(grouped);
-    });
-  }, [messages]);
+  // Stable signature of message ids so reactions only refetch when the set actually changes
+  const messageIdsKey = messages.map(m => m.id).join(',');
+  const messagesRef = useRef<any[]>(messages);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
+  const fetchReactions = useCallback(async () => {
+    const ids = messagesRef.current.map(m => m.id).filter(Boolean);
+    if (ids.length === 0) { setReactions({}); return; }
+    const { data } = await supabase.from('message_reactions').select('message_id, emoji, user_id').in('message_id', ids);
+    if (!data) return;
+    const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
+    data.forEach((r: any) => {
+      (grouped[r.message_id] = grouped[r.message_id] || []).push({ emoji: r.emoji, user_id: r.user_id });
+    });
+    setReactions(grouped);
+  }, []);
+
+  useEffect(() => { fetchReactions(); }, [messageIdsKey, fetchReactions]);
+
+  // Subscribe ONCE per chat, not on every message change
   useEffect(() => {
+    if (!activeChat) return;
     const ch = supabase
-      .channel('reactions-realtime')
+      .channel(`reactions-${activeChat.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, () => {
-        if (messages.length > 0) {
-          const msgIds = messages.map(m => m.id);
-          supabase.from('message_reactions').select('*').in('message_id', msgIds).then(({ data }) => {
-            if (!data) return;
-            const grouped: Record<string, { emoji: string; user_id: string }[]> = {};
-            data.forEach((r: any) => {
-              if (!grouped[r.message_id]) grouped[r.message_id] = [];
-              grouped[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
-            });
-            setReactions(grouped);
-          });
-        }
+        fetchReactions();
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [messages]);
+  }, [activeChat?.id, fetchReactions]);
 
+  // Auto-scroll: instant on initial load / large jumps, smooth only for incremental updates
+  const prevMsgCountRef = useRef(0);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const prev = prevMsgCountRef.current;
+    const diff = messages.length - prev;
+    prevMsgCountRef.current = messages.length;
+    if (messages.length === 0) return;
+    const behavior: ScrollBehavior = diff > 3 || prev === 0 ? 'auto' : 'smooth';
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  }, [messages.length]);
 
   useEffect(() => {
     if (disappearSetting <= 0 || messages.length === 0 || !activeChat) return;

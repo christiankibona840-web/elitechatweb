@@ -267,6 +267,16 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
               <Rocket size={18} />
               <span className="text-[9px] font-semibold uppercase tracking-wider">Projects</span>
             </button>
+            <a
+              href="https://chris-p7a0.onrender.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+              title="About Developer"
+            >
+              <Code size={18} />
+              <span className="text-[9px] font-semibold uppercase tracking-wider">Developer</span>
+            </a>
           </div>
         </>
       )}

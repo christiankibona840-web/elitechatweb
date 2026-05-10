@@ -297,8 +297,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       .from('messages')
       .select('*')
       .or(`and(sender_id.eq.${me.id},receiver_id.eq.${contactId}),and(sender_id.eq.${contactId},receiver_id.eq.${me.id})`)
-      .order('created_at', { ascending: true });
-    setMessages(data || []);
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setMessages((data || []).reverse());
   };
 
   const loadGroupMessages = async (groupId: string) => {
@@ -306,8 +307,9 @@ const ChatArea = ({ me, activeChat, onMessagesChanged, onBack }: ChatAreaProps) 
       .from('group_messages')
       .select('*, profiles!group_messages_sender_id_fkey(display_name)')
       .eq('group_id', groupId)
-      .order('created_at', { ascending: true });
-    setMessages(data || []);
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setMessages((data || []).reverse());
   };
 
   const markAsRead = async (senderId: string) => {

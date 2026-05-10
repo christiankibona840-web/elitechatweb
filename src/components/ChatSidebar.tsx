@@ -11,7 +11,7 @@ import PeoplePanel from './PeoplePanel';
 import ProjectZone from './ProjectZone';
 import GamesPanel from './games/GamesPanel';
 import { LOVABLE_BOT_ID, LOVABLE_BOT_PROFILE } from '@/lib/lovableBot';
-import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket, Gamepad2 } from 'lucide-react';
+import { LogOut, Search, UserPlus, Users, MessageCircle, Camera, Settings, Globe, Rocket, Gamepad2, Code } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;

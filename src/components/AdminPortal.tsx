@@ -133,26 +133,23 @@ const AdminPortal = ({ onLogout, onBackToChoice }: AdminPortalProps) => {
   };
 
   useEffect(() => {
-    loadUsers();
+    loadUsers(true); // initial load with spinner
     loadBlockedUsers();
     loadAnnouncements();
-    const interval = setInterval(() => { loadUsers(); }, 30000);
-    const channel = supabase
-      .channel('admin-presence')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => loadUsers())
-      .subscribe();
-    return () => { clearInterval(interval); supabase.removeChannel(channel); };
+    // Quiet refresh every 60s — no spinner, no realtime spam from heartbeats
+    const interval = setInterval(() => { loadUsers(false); }, 60000);
+    return () => { clearInterval(interval); };
   }, []);
 
-  const loadUsers = async () => {
-    setLoading(true);
+  const loadUsers = async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     const { data, error } = await supabase.rpc('admin_list_users');
     if (error) {
-      toast({ title: 'Error loading users', description: error.message, variant: 'destructive' });
+      if (showSpinner) toast({ title: 'Error loading users', description: error.message, variant: 'destructive' });
     } else {
       setUsers((data as AdminUser[]) || []);
     }
-    setLoading(false);
+    if (showSpinner) setLoading(false);
   };
 
   const loadBlockedUsers = async () => {

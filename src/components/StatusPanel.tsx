@@ -217,6 +217,14 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
             {viewing.statuses[viewIdx]?.media_url && <img src={viewing.statuses[viewIdx].media_url} className="max-h-[60vh] mx-auto rounded-xl mb-4" />}
             {viewing.statuses[viewIdx]?.content && <p className="text-xl text-foreground">{viewing.statuses[viewIdx].content}</p>}
           </div>
+          {viewing.user.id === me.id && viewing.statuses[viewIdx] && (
+            <button
+              onClick={(e) => { e.stopPropagation(); loadViewers(viewing.statuses[viewIdx].id); }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-foreground/10 hover:bg-foreground/20 text-foreground rounded-full px-4 py-2 text-sm backdrop-blur-md"
+            >
+              <Eye size={16} /> Viewed by
+            </button>
+          )}
         </div>
       )}
 

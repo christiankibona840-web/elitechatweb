@@ -33,6 +33,9 @@ interface ConversationItem {
   lastMessage: string;
   lastTime: string | null;
   unread: number;
+  isOnline?: boolean | null;
+  lastSeen?: string | null;
+  avatarUrl?: string | null;
 }
 
 const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onProfileUpdate, onOpenGame }: ChatSidebarProps) => {
@@ -50,7 +53,7 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
   const loadConversations = async () => {
     const { data: contacts } = await supabase
       .from('contacts')
-      .select('contact_id, profiles!contacts_contact_id_fkey(id, display_name, readable_id, is_online)')
+      .select('contact_id, profiles!contacts_contact_id_fkey(id, display_name, readable_id, is_online, last_seen, avatar_url)')
       .eq('user_id', me.id);
 
     const items: ConversationItem[] = [];
@@ -84,6 +87,9 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
           lastMessage: last ? (last.sender_id === me.id ? `You: ${lastText}` : lastText) : '',
           lastTime: last?.created_at || null,
           unread: count || 0,
+          isOnline: profile.is_online,
+          lastSeen: profile.last_seen,
+          avatarUrl: profile.avatar_url,
         });
       }
     }
@@ -224,7 +230,13 @@ const ChatSidebar = ({ me, activeChat, onSelectChat, onLogout, refreshKey, onPro
                   onClick={() => onSelectChat({ type: item.type, id: item.id })}
                   className={`flex items-center gap-3 px-4 py-2.5 w-full text-left transition-colors hover:bg-app-input-bg ${isActive(item) ? 'bg-app-input-bg' : ''}`}
                 >
-                  <Avatar name={item.name} size={50} avatarUrl={item.id === LOVABLE_BOT_ID ? LOVABLE_BOT_PROFILE.avatar_url : undefined} />
+                  <Avatar
+                    name={item.name}
+                    size={50}
+                    avatarUrl={item.id === LOVABLE_BOT_ID ? LOVABLE_BOT_PROFILE.avatar_url : item.avatarUrl}
+                    isOnline={item.type === 'dm' && item.id !== LOVABLE_BOT_ID ? item.isOnline : undefined}
+                    lastSeen={item.type === 'dm' && item.id !== LOVABLE_BOT_ID ? item.lastSeen : undefined}
+                  />
                   <div className="flex-1 min-w-0 border-b border-border pb-2.5">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-foreground truncate max-w-[130px]">

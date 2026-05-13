@@ -397,7 +397,7 @@ const Index = () => {
   const showSidebar = !isMobile || (!activeChat && !activeGameId);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       <AnnouncementBanner />
       <IncomingGameInvite me={profile} onOpenGame={openGame} />
       {showUpdateAlert && (
@@ -406,44 +406,46 @@ const Index = () => {
           onDismiss={() => setShowUpdateAlert(false)}
         />
       )}
-      {showSidebar && !activeGameId && (
-        <ChatSidebar
-          me={profile}
-          activeChat={activeChat}
-          onSelectChat={setActiveChat}
-          onLogout={handleLogout}
-          refreshKey={refreshKey}
-          onProfileUpdate={handleProfileUpdate}
-          onOpenGame={openGame}
-        />
-      )}
-      {activeGameId ? (
-        <div className="flex-1 min-w-0">
-          {activeGameType === 'c4' ? (
-            <Connect4Board
-              gameId={activeGameId}
-              me={profile}
-              onClose={() => setActiveGameId(null)}
-            />
-          ) : (
-            <TicTacToeBoard
-              gameId={activeGameId}
-              me={profile}
-              onClose={() => setActiveGameId(null)}
-            />
-          )}
-        </div>
-      ) : (
-        showChatArea && (
-          <ChatArea
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {showSidebar && !activeGameId && (
+          <ChatSidebar
             me={profile}
             activeChat={activeChat}
-            onMessagesChanged={handleMessagesChanged}
-            onBack={isMobile ? () => setActiveChat(null) : undefined}
+            onSelectChat={setActiveChat}
+            onLogout={handleLogout}
+            refreshKey={refreshKey}
+            onProfileUpdate={handleProfileUpdate}
+            onOpenGame={openGame}
           />
-        )
-      )}
-      {!isMobile && !activeGameId && <ReelsPanel />}
+        )}
+        {activeGameId ? (
+          <div className="flex-1 min-w-0">
+            {activeGameType === 'c4' ? (
+              <Connect4Board
+                gameId={activeGameId}
+                me={profile}
+                onClose={() => setActiveGameId(null)}
+              />
+            ) : (
+              <TicTacToeBoard
+                gameId={activeGameId}
+                me={profile}
+                onClose={() => setActiveGameId(null)}
+              />
+            )}
+          </div>
+        ) : (
+          showChatArea && (
+            <ChatArea
+              me={profile}
+              activeChat={activeChat}
+              onMessagesChanged={handleMessagesChanged}
+              onBack={isMobile ? () => setActiveChat(null) : undefined}
+            />
+          )
+        )}
+        {!isMobile && !activeGameId && <ReelsPanel />}
+      </div>
     </div>
   );
 };

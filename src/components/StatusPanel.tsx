@@ -97,21 +97,44 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="px-4 py-3">
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-3 w-full text-left">
+      <div className="px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => {
+            if (myStatuses.length > 0) {
+              setViewing({ user: { id: me.id, display_name: me.display_name }, statuses: myStatuses });
+              setViewIdx(0);
+            } else {
+              setShowAdd(true);
+            }
+          }}
+          className="flex items-center gap-3 flex-1 text-left"
+        >
           <div className="relative">
             <Avatar name={me.display_name} size={50} avatarUrl={me.avatar_url} />
-            <div className="absolute bottom-0 right-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-app-panel">
-              <Plus size={12} className="text-primary-foreground" />
-            </div>
+            {myStatuses.length > 0 ? (
+              <div className="absolute inset-0 rounded-full ring-2 ring-primary" />
+            ) : (
+              <div className="absolute bottom-0 right-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-app-panel">
+                <Plus size={12} className="text-primary-foreground" />
+              </div>
+            )}
           </div>
           <div>
             <div className="text-sm font-medium text-foreground">My Status</div>
             <div className="text-xs text-muted-foreground">
-              {myStatuses.length > 0 ? `${myStatuses.length} status update(s)` : 'Tap to add status'}
+              {myStatuses.length > 0 ? `Tap to view · ${myStatuses.length} update(s)` : 'Tap to add status'}
             </div>
           </div>
         </button>
+        {myStatuses.length > 0 && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-app-primary-dark transition-colors"
+            title="Add status"
+          >
+            <Plus size={18} />
+          </button>
+        )}
       </div>
 
       {myStatuses.length > 0 && (
@@ -194,6 +217,14 @@ const StatusPanel = ({ me }: StatusPanelProps) => {
             {viewing.statuses[viewIdx]?.media_url && <img src={viewing.statuses[viewIdx].media_url} className="max-h-[60vh] mx-auto rounded-xl mb-4" />}
             {viewing.statuses[viewIdx]?.content && <p className="text-xl text-foreground">{viewing.statuses[viewIdx].content}</p>}
           </div>
+          {viewing.user.id === me.id && viewing.statuses[viewIdx] && (
+            <button
+              onClick={(e) => { e.stopPropagation(); loadViewers(viewing.statuses[viewIdx].id); }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-foreground/10 hover:bg-foreground/20 text-foreground rounded-full px-4 py-2 text-sm backdrop-blur-md"
+            >
+              <Eye size={16} /> Viewed by
+            </button>
+          )}
         </div>
       )}
 

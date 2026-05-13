@@ -119,16 +119,13 @@ const PeoplePanel = ({ me, onStartChat }: PeoplePanelProps) => {
                       <X size={10} className="text-muted-foreground" />
                     </button>
 
-                    {/* Avatar with online ring */}
+                    {/* Avatar with presence ring + dot (green=truly active, yellow=idle) */}
                     <div className="relative mb-2">
                       <div className={`rounded-full p-[2px] ${user.is_online ? 'bg-gradient-to-tr from-primary to-accent' : ''}`}>
                         <div className="rounded-full bg-card p-[1px]">
-                          <Avatar name={user.display_name} size={52} avatarUrl={user.avatar_url} />
+                          <Avatar name={user.display_name} size={52} avatarUrl={user.avatar_url} isOnline={user.is_online} lastSeen={user.last_seen} />
                         </div>
                       </div>
-                      {user.is_online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
-                      )}
                     </div>
 
                     <span className="text-[11px] font-medium text-foreground truncate w-full text-center">{user.display_name}</span>
@@ -201,12 +198,7 @@ const UserRow = ({ user, isContact, loading, onAction }: {
     disabled={loading}
     className="flex items-center gap-3 px-4 py-2.5 w-full text-left transition-colors hover:bg-muted/50"
   >
-    <div className="relative">
-      <Avatar name={user.display_name} size={44} avatarUrl={user.avatar_url} />
-      {user.is_online && (
-        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
-      )}
-    </div>
+    <Avatar name={user.display_name} size={44} avatarUrl={user.avatar_url} isOnline={user.is_online} lastSeen={user.last_seen} />
     <div className="flex-1 min-w-0">
       <div className="text-sm font-medium text-foreground truncate">{user.display_name}</div>
       <div className="text-xs text-muted-foreground truncate">

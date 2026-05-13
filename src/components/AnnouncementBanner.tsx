@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { X, Megaphone, ChevronDown, ChevronUp, Archive } from 'lucide-react';
+import { X, Megaphone, ChevronDown, Archive } from 'lucide-react';
 
 interface Announcement {
   id: string;
@@ -64,9 +64,9 @@ const AnnouncementBanner = () => {
         </button>
       )}
 
-      {/* Marquee banner */}
+      {/* Marquee banner — relative so it pushes the app down instead of covering the sidebar / logout */}
       {!collapsed && (
-        <div className="fixed top-0 left-0 right-0 z-50">
+        <div className="relative z-40 w-full flex-shrink-0">
           <div className="marquee-container bg-gradient-to-r from-primary to-[hsl(var(--app-primary-dark))] text-primary-foreground shadow-lg flex items-center gap-2 overflow-hidden">
             <button
               onClick={() => setShowArchive(true)}
@@ -77,7 +77,7 @@ const AnnouncementBanner = () => {
               <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Announcements</span>
               <Archive size={12} className="opacity-80" />
             </button>
-            <div className="flex-1 overflow-hidden py-2">
+            <div className="flex-1 overflow-hidden py-2 min-w-0">
               <div className="animate-marquee text-sm">
                 {recent.map((a, i) => (
                   <span key={a.id} className="inline-flex items-center gap-2 mx-8">
@@ -103,11 +103,12 @@ const AnnouncementBanner = () => {
             </button>
             <button
               onClick={() => setCollapsed(true)}
-              className="flex-shrink-0 p-2 rounded-full hover:bg-white/20 transition-colors mr-1"
-              aria-label="Collapse"
-              title="Hide (you can reopen anytime)"
+              className="flex-shrink-0 mr-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/30 transition-colors flex items-center gap-1 text-[10px] font-semibold"
+              aria-label="Close announcements"
+              title="Close (you can reopen anytime from the floating bell)"
             >
-              <ChevronUp size={16} />
+              <X size={14} />
+              <span className="hidden sm:inline">Close</span>
             </button>
           </div>
         </div>

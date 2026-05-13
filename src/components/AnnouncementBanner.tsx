@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { X, Megaphone, ChevronDown, ChevronUp, Archive } from 'lucide-react';
+import { X, Megaphone, ChevronDown, Archive } from 'lucide-react';
 
 interface Announcement {
   id: string;
